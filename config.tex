@@ -1,0 +1,72 @@
+\usepackage[english, russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{indentfirst}
+\usepackage{bm}
+\usepackage[a4paper, total={6in, 10in}]{geometry}
+
+% For using subfigures
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% To put a figure where it is
+\usepackage{float}
+
+\usepackage{tensor}
+\usepackage{biblatex}
+\usepackage{titlesec}
+\usepackage{bbm, dsfont} % For indicator functions
+\usepackage{mathtools} % for \coloneqq
+\usepackage[bottom]{footmisc} % prevents pictures going below footnote :|
+% \usepackage{pifont} % for \ding{...}
+
+
+% \newcommand\defeq{\stackrel{\mathclap{\normalfont\mbox{def}}}{=}}
+
+\newcommand{\expect}[2][]{
+\ifthenelse{\equal{#1}{}}{
+\mathbb{E}\left[#2\right]
+}{
+\underset{#1}{\mathbb{E}}\left[#2\right]
+}}
+
+\newcommand{\cov}[2][]{
+\ifthenelse{\equal{#1}{}}{
+\text{Cov}\left[#2\right]
+}{
+\underset{#1}{\text{Cov}}\left[#2\right]
+}}
+
+
+\newcommand{\var}[2][]{
+\ifthenelse{\equal{#1}{}}{
+\text{Var}[#2]
+}{
+\underset{#1}{\text{Var}}[#2]
+}}
+
+\newcommand{\loss}[2][]{
+\ifthenelse{\equal{#1}{}}{
+\mathcal{L}(#2)
+}{
+\mathcal{L}_{#1}(#2)
+}}
+
+\newcommand{\kl}[2]{
+\text{D}_\text{KL}[#1 \parallel #2]
+}
+
+\newcommand{\R}{\mathbb{R}}
+%\newcommand{\Prob}{\mathbb{P}}
+
+\newcommand{\1}[1]{\mathds{1}\{#1\}}
+
+% We need this for \begin{theorem}...\end{theorem} staff
+\newtheorem*{theorem*}{Theorem}
+\newtheorem{theorem}{Theorem}
+\newtheorem*{proposition*}{Proposition}
+\newtheorem{proposition}{Proposition}
+\newtheorem*{lemma*}{Lemma}
+\newtheorem{lemma}{Lemma}
