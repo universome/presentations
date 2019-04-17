@@ -1,4 +1,4 @@
-\usepackage[english, russian]{babel}
+\usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage{fancyhdr}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
@@ -22,6 +22,7 @@
 \usepackage[bottom]{footmisc} % prevents pictures going below footnote :|
 % \usepackage{pifont} % for \ding{...}
 
+\addbibresource{../../articles/articles.bib}
 
 % \newcommand\defeq{\stackrel{\mathclap{\normalfont\mbox{def}}}{=}}
 
@@ -70,3 +71,8 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem*{lemma*}{Lemma}
 \newtheorem{lemma}{Lemma}
+\newtheorem*{question*}{Question}
+\newtheorem{question}{Question}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]

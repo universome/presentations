@@ -1,0 +1,231 @@
+\documentclass{article}
+\input{../config}
+
+\title{Information Bottleneck in Deep Learning}
+\author{Ivan Skorokhodov}
+
+\begin{document}
+
+%\maketitle
+
+\section{Information Theory basics}
+Here we will give all the required definitions and their properties.
+
+\begin{definition}
+\textbf{Entropy} H(X) of a discrete random variable $X$ with probability mass function $p(X)$ is the quantity
+\[
+H(X) = \expect[p(x)]{-\log p(x)}
+\]
+\end{definition}
+
+\begin{definition}
+\textbf{Differential entropy} of a random variable $X$ with probability density function $p(x)$ is the quantity
+\[
+H(X) = \expect[p(x)]{-\log p(x)}
+\]
+\end{definition}
+
+
+\section{Information Bottleneck as such}
+\subsection{Origins and formulation}
+Information Bottleneck origins from rate-distortion theory, which is solving the following task: given a random variable $X$ and some \textit{distortion} function $d(x,\tilde{x})$ quantize $X$ into $\tilde{X}$ such that $\tilde{X}$ is compressed as much as possible, but not too corrupted.
+Strictly speaking, we are trying to solve
+\[
+\min_{p(\tilde{x} | x)} I(\tilde{X}; X) \quad \text{s.t. } D(X, \tilde{X}) \leq D^*,
+\]
+where
+\[
+D(X, \tilde{X}) = \expect[p(x, \tilde{x})]{d(x, \tilde{x})}
+\]
+and $D^*$ is the maximum value of possible distortion that we permit.
+MSE loss or Hamming distance are common choices for $d(x, \tilde{x})$.
+
+%We solve this problem by introducing lossy coding $X \xrightarrow{f} Z \xrightarrow{g} \tilde{X}$, where $f$ and $g$ are encoder and decoder.
+
+%Why do we need it?
+%Imagine you want to send a bag of memes to your grandma.
+%Your grandma lives in countryside, where internet connection is quite week.
+%
+
+%Note, that here we minimize $I(\tilde{X}; X)$ and not $H(\tilde{X})$ which can feel more natural, is equivalent for deterministic mappings and actually being done sometimes.
+%The reason for this is that (in discrete case) we are maximizing $H(X|\tilde{X})$ by doing this, and this means that we try to cover more $X$ with a single $\tilde{X}$.
+%This, in turn, makes $\tilde{X}$ be set in those regions where $X$ is uniform and capture equal amounts of $X$.
+%While minimization of $H(\tilde{X})$ can provide a solution, where TODO.
+
+We can find optimal quantization by solving the variational problem:
+\[
+\loss{p(\tilde{x} | \tilde{x})} = I(X; \tilde{X}) + \beta D(X, \tilde{X})
+\]
+
+The main problem with rate-distortion theory is that we need a distortion function $d(x, \tilde{x})$, which is difficult to specify for complex structured data, such as video or speech.
+And here Information Bottleneck comes to the rescue: what if after reconstruction we are only interested in some variable $Y$?
+Then we can reformulate our problem as
+\[
+\loss{p(\tilde{x} | \tilde{x})} = I(X; \tilde{X}) - \beta I(Y, \tilde{X})
+\]
+
+For discrete case it can be shown \cite{Information_Bottleneck}, that it's a special case of rate-distortion problem with $d(x, \tilde{x}) = \kl{p(y|x)}{p(y|\tilde{x})}$.
+
+\subsection{A few words about sufficient statistics}
+\begin{itemize}
+    \item Two datasets which give us the same inference about sufficient statistic, would give the same inference about underlying parameter $\theta$.
+    \item Any injective function of sufficient statistic is also a sufficient statistic.
+    \item Factorization theorem says, that $p(x|y) = h_T(X) g_T(T(X), y)$, dependence in $g_T$ in $x$ is only through $T(x)$.
+\end{itemize}
+
+\subsection{Sufficiency and minimality of representations}
+From now on we'll use symbol $Z$ for variable $\tilde{X}$, because it's more consistent with modern DL literature.
+
+We have the following optimization problem:
+\[
+\loss{p(x;z)} = I(X;Z) - \beta I(Z; Y)
+\]
+
+There is an interesting statement which connects notion of \textit{sufficiency} and \textit{minimality} of $Z$ in the $\beta \to \infty$ setting.
+Let denote by $F(X)$ all random mappings of $X$ (this means, that for $f \in F(X)$ we have Markov chain $Y \to X \to f(X)$).
+Let $S_X(Y)$ be a set of all sufficient statistics of $X$ for $Y$.
+
+\begin{proposition}
+If $Z$ is a solution to
+\[
+\min_{Z} I(X; Z) \quad\text{s.t. } I(Z;Y) = \max_{Z'} I(Z'; Y)
+\]
+then $Z$ is a minimal sufficient statistics of $X$ for $Y$
+\[
+P(X|Z,Y) = P(X|Z)
+\]
+\end{proposition}
+
+In other words, we are getting a minimal sufficient representation by optimizing Lagrangian in the limit $\beta \to \infty$.
+The proof of this theorem is split into two lemmas.
+
+\begin{lemma}
+    $Z$ is a sufficient statistic of $X$ for $Y$ iff $I(Z;Y) = I(X;Y)$.
+\end{lemma}
+
+\begin{proof}
+Imagine that $T \in S_X(Y)$.
+For any $Z \in F(X)$ we have a Markov chain $Y \to X \to Z$, so by DPI we have $I(Y;Z) \leq I(Y;X)$.
+But by sufficient statistic property we have $P(X|Z,Y) = P(X|Y)$, so we have a Markov chain $Y \to Z \to X$.
+Again by DPI we have $I(Y;Z) \leq I(Y;X)$, so $I(Y;Z) = I(Y;X)$.
+
+Now consider $Z = f(X)$ for some $f \in F(X)$ such that $I(Y;Z) = I(Y;X)$.
+As $Y \to X \to Z$ is a Markov chain, then by definition of conditional MI we have:
+\[
+\begin{split}
+I(Y:Z|X) &\triangleq \expect[X]{\kl{p(Y,Z|X)}{p(Y|X)p(Z|X)}} \\
+&= \expect[X]{\kl{p(Z|X,Y)p(Y|X)}{p(Y|X)p(Z|X)}} \\
+&= \expect[X]{\kl{p(Y|X)p(Z|X)}{p(Y|X)p(Z|X)}} = 0
+\end{split}
+\]
+
+Now, by chain rule for MI we have:
+\[
+I(Y : X,Z) = I(Y : X) + I(Y,X|Z) = I(Y : X) + I(Y,Z|X) \Longrightarrow I(Y,X|Z) = I(Y,Z|X) = 0
+\]
+Applying definition of conditional MI again we get $p(Y,X|Z) = p(Y|Z)p(X|Z)$.
+And this means that $Z \in S_X(Y)$:
+\[
+p(X|Y,Z) = \frac{p(X,Y|Z)}{p(Y|Z)} = \frac{p(X|Z) p(Y|Z)}{p(Y|Z)} = p(X|Z)
+\]
+\end{proof}
+
+Let's denote by $S_X^*(Y)$ a set of minimal sufficient statistics of $X$ for $Y$.
+\begin{lemma}
+Let $Z \in S_X(Y)$, then
+\[
+Z \in S_X^*(Y) \Longleftrightarrow I(X;Z) = \min_{T \in S_X(Y)} I(X;T)
+\]
+\end{lemma}
+
+\begin{proof}
+First, let $Z$ be a minimal sufficient statistic.
+Then for any other sufficient statistic $T$ we have $Z = f(T)$ for some $f$.
+Then we get a Markov chain $X \to T \to Z$ and by DPI we have $I(X;Z) \leq I(X;T)$.
+
+Now, let's prove reverse direction of the claim.
+Imagine, that $Z \in S_X(Y)$ but is not minimal.
+We are going to show, that $\exists T \in S_X(Y)$ such that $I(X;Z) > I(X;T)$.
+By Fisher-Neyman factorization theorem we have
+\[
+Z \in S_X(Y) \Longleftrightarrow \exists\ h_Z, g_Z \text{ s.t. } \forall x,y \quad p(x|y) = h_Z(x) g_Z(Z(x), y)
+\]
+
+Let's define an equivalence relation
+\[
+a \sim b \Longleftrightarrow \forall y \exists \lambda s.t. \frac{g_Z(a, y)}{g_Z(b, y)} = \lambda(a, b)
+\]
+
+Now we define a deterministic function $T:\mathcal{X} \to \mathcal{Z}$ such that $\forall x: T(x) = \bar{z}$ --- a representative of $[Z(x)]$ (TODO: exists by axiom of choice?).
+%This means that $T$ is a function of $Z$ and we have a Markov chain $X \to Z \to T$.
+Let's prove, that it is a sufficient statistic.
+For this let's define
+\[
+\begin{split}
+h_T(x) &\triangleq h_Z(x) \frac{g_Z(Z(x), y)}{g_Z(T(x), y)} \\
+g_T(T(x), y) &\triangleq g_Z(T(x), y)
+\end{split}
+\]
+Then we have
+\[
+p(x|y) = h_Z(x) g_Z(Z(x), y) = h_Z(x) \frac{g_Z(Z(x), y)}{g_T(T(x), y)} g_T(T(x), y) = h_T(x) g_T(T(x), y)
+\]
+Hence $T$ is a sufficient statistic.
+
+Now let's show that $I(X;Z) > I(X;T)$.
+Since $Z$ is not minimal, then there is such $R \in S_X(Y)$ that $Z$ is not a function of $R$.
+Let's show, that $T$ is a function of $R$ (btw, this will show, that $T$ is minimal).
+For this we are going to show that if $R(x_1) = R(x_2)$ then $T(x_1) = T(x_2)$: this would allow us to build a function $\phi:\mathcal{R} \to \mathcal{T}$ which just take value $r$, find it's preimage $R^{-1}(r)$, take any sample $x \in R^{-1}(r)$ and compute $T(x)$.
+For any $x_1, x_2$ such that $R(x_1) = R(x_2)$ we have:
+\[
+\begin{split}
+\frac{g_Z(Z(x_1), y)}{g_Z(Z(x_2), y)}
+&= \frac{p(x_1 | y) h_Z(x_2)}{p(x_2 | y) h_Z(x_1)} \\
+&= \frac{h_R(x_1) g_R(R(x_1), y) h_Z(x_2)}{h_R(x_2) g_R(R(x_2), y) h_Z(x_1)} \\
+&= \frac{h_R(x_1) g_R(R(x_1), y) h_Z(x_2)}{h_R(x_2) g_R(R(x_1), y) h_Z(x_1)} \\
+&= \frac{h_R(x_1) h_Z(x_2)}{h_R(x_2) h_Z(x_1)} \\
+&= \lambda(Z(x_1), Z(x_2))
+\end{split}
+\]
+This means that $Z(x_1) \sim Z(x_2)$, which in turn means that $T(x_1) = T(x_2)$, so $T$ is minimal sufficient statistic and a function of $R$.
+\end{proof}
+
+\section{First steps: SZT experiments, critics}
+
+\section{Disentangled representations}
+
+The following theorem gives us a hope to build invariant and disentangled representations.
+Informally, it says that if we can build sufficient and minimal representations (which we are building by optimizing IB Lagrangian, for example), then we get invariant and disentangled ones.
+
+\section{Information in the weights}
+\subsection{Properties}
+\subsection{Minimum description length}
+\subsection{Connection to representations}
+
+\section{Mutual information estimators}
+\subsection{MINE}
+
+\subsection{MI estimator under gaussian convolutions}
+
+\section{Bibliography}
+\printbibliography
+
+\section*{Exercises}
+\begin{enumerate}
+%    \item Prove that
+%\[
+%\arg \min_{q(y)} \kl{p(x,y)}{p(x)q(y)} = f(y) \Longleftrightarrow f(y) = p(y)
+%\]
+    \item Prove that
+\[
+\arg \min_{q_1(x_1) , ... , q_n(x_n)} \kl{p(x_1, ..., x_n)}{q_1(x_1) \cdot ... \cdot q_n(x_n)} = p(x_1) \cdot ... \cdot p(x_n) \Longleftrightarrow q_1(x_1) , ... , q_n(x_n) = p(x_1), ..., p(x_n)
+\]
+%    \item We have a natural (which comes from our modeling) Markov property of $X \to Z \to Y$. Prove Markov property of $Z \to X \to Y$.
+    \item Prove that if $X, Y$ are normally distributed, then $Z$ is normally distributed too. %http://www.jmlr.org/papers/volume6/chechik05a/chechik05a.pdf
+    \item Maybe something on finding differential entropy of r.v. with infinite differential entropy. Or constructing such a variable.
+    \item Prove that $I(X;T)$ is either infinity or constant (except measure zero of weights).
+    \item Prove DPI
+    \item IB solution is a minimal sufficient statistic (based on http://www.cs.huji.ac.il/labs/learning/Papers/ibgen.pdf, theorem 5)
+\end{enumerate}
+
+\end{document}
