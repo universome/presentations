@@ -230,6 +230,95 @@ This means that $Z(x_1) \sim Z(x_2)$, which in turn means that $T(x_1) = T(x_2)$
 
 \section{First steps: SZT experiments, critics}
 
+\subsection{Main ideas}
+First attempts to apply IB to deep learning are to Ravid Shwartz-Ziv and Naftali Tishby \cite{DL_and_IB}.
+They proposed to view at a NN as a Markov chain
+\[
+Y \to X \to Z_1, ... , \to Z_l
+\]
+where $X$ is an input, and $Z_i$ is our hidden representations.
+
+SZT theory claims that NNs implicitly minimizes IB Lagrangian for each layer and does the following claims:
+\begin{itemize}
+    \item There are two phases of training: fitting (when MI with input grows) and compression (when MI with input decreases).
+    \item Compression results in good generalization.
+    \item Compression occurs due to diffusion-like behaviour of SGD (looks like it was recently proved by \cite{SGD_and_VI_and_FP}).
+\end{itemize}
+
+They give nice pictures for this.
+TODO: plot nice pictures of $I(X; Z_i)$ growing, then decreasing and $I(Z_i; Y)$ just growing.
+Do not forget, that by DPI further layers should be lower for both $I(Z_i; Y)$ plot and $I(X;Y)$ plot as our Markov chain implies $y \to x \to z_1 \to ... \to z_l$.
+
+We define SNR for SGD as
+\[
+\mathrm{SNR}=\frac{m_{l}}{s_{l}} \quad m_{l}=\left\|\operatorname{Mean}\left(\frac{\partial E}{\partial W_{l}}\right)\right\|_{F} \quad s_{l}=\left\|\operatorname{Std}\left(\frac{\partial E}{\partial W_{l}}\right)\right\|_{F}
+\]
+
+SZT claim that it this SGD behaviour was connected to fitting and compression phases.
+Pictures on SNR for SGD looks like
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{sgd-snr.png}
+\caption{Figure 20 from \cite{DL_and_IB_critics}: Gradient SNR phase transition. (A) tanh networks trained in the standard setting of SZT show a phase transition in every layer. (B) ReLU networks also show a phase transition in every layer, despite exhibiting no compression.}
+\end{figure}
+
+\subsection{Critics}
+But there are two problems with their experiments:
+\begin{itemize}
+    \item Values of $I(X;Z_i)$ and $I(Y;Z_i)$ are either constant or infinite. That's why it's meaningless to measure them.
+    \item Only toy experiments are performed. Authors claimed (in 2017) that they have CIFAR-10 experiments running, but no paper about this was published since.
+    \item It does not work for ReLU, i.e. \cite{DL_and_IB_critics}. N.Tishby answer, that bad binning procedure was used, that's why authors got such results. But more sophisticated methods (Kraskov k-means and KDE) of estimating MI didn't lead to something better. Besides, they built ReLU network which exhibit right SNR behaviour, but didn't compress. 
+\end{itemize}
+
+\subsection{Why MI is either constant or infinite}
+\begin{proposition}
+Consider a discrete distribution $x \sim p(x)$ (possible with countable support) and a NN
+\[
+f(x) = \sigma(...\sigma(W_2\sigma(W_1 x + b_1) + b_2)...)
+\]
+with some injective non-linearity $\sigma$ (sigmoid, tanh, LeakyReLU, SELU, etc).
+Then there is only measure-zero set of weights $W_1, ..., W_L, b_1, ..., b_L$ s.t. for some $x_i \neq x_j$ from $p(x)$ we get $f(x_i) = f(x_j)$.
+This means, that NN is injective for $p(x)$.
+\end{proposition}
+
+\begin{proposition}
+If NN is deterministic, then $I(z_l;x)$ is either constant (for descrete $x$) or infinite (for continuous $x$), regardless of training.
+\end{proposition}
+
+\begin{proof}
+Consider a discrete setting. Then
+\[
+I(z_l;x) = H(x) - H(x|z_l)
+\]
+
+We are going to prove that $H(x|z_l) \equiv 0$:
+\[
+H(x|z_l) = H(x|x) = 0
+\]
+We used the fact that since $z_l$ is an injective and deterministic mapping of $x$, then we can invert it (it is clearly surjective by design: we use only support of $z_l$).
+
+TODO: prove for continuous distribution.
+Looks like we'll need local injectivity (which should work for ReLU too since they are piecewise-linear?).
+And show that conditional entropy is $-\infty$ for some regions.
+\end{proof}
+
+\subsection{Remarks}
+\begin{remark}
+Authors in \cite{Estimating_MI_in_NNs} claim that we measure not MI, but some other quantity, connected to clusterization.
+So although we have just proved that it's not possible for MI to change actually, another term is changing and it's changing for ReLU too.
+Unfortunately, proofs about clusterization are only empirical (yet).
+\end{remark}
+
+\begin{remark}
+Actually, their claims about SGD are hold true and are observed in other works.
+\end{remark}
+
+\begin{remark}
+Actually, N.Tishby claims in his talk, that they have rigorous proofs about SGD behaviour and compression generalization bounds.
+It was pusblished on ICLR 2019, but got somewhat ``retracted''.
+\end{remark}
+
+
 \section{Disentangled representations}
 
 The following theorem gives us a hope to build invariant and disentangled representations.
@@ -241,7 +330,11 @@ If $\eta$ is a nuisance for the task $y$ and $z$ is a sufficient representation 
 I(z;\eta) \leq I(z;x) - I(x;y)
 \]
 
-Moreover, if $y$ is discrete, then
+Moreover, if $y$ is discrete, then we can use task-decomposition lemma and prove something more strict:
+\[
+I(z;\eta) = I(z;x) - I(x;y) - \epsilon,
+\]
+where $\epsilon \triangleq I(z; y|\eta) - I(x;y)$.
 \end{proposition}
 
 \begin{proof}
@@ -359,6 +452,8 @@ $I(\eta; z_l) \leq I(\eta; z_i)$.
 \subsection{Connection to representations}
 
 \section{Mutual information estimators}
+\subsection{Binning}
+
 \subsection{MINE}
 
 \subsection{MI estimator under gaussian convolutions}
