@@ -25,6 +25,44 @@ H(X) = \expect[p(x)]{-\log p(x)}
 \]
 \end{definition}
 
+Mutual information:
+\[
+\begin{split}
+I(X;Y)
+&= H(X) - H(X|Y) \\
+&= H(Y) - H(Y|X) \\
+&= \kl{p(x,y)}{p(x)p(y)} \\
+&= \text{TC}(p(x,y)) \\
+&= \expect[x]{\kl{p(y|x)}{p(y)}}
+\end{split}
+\]
+
+Chain rule for MI:
+\[
+I(X ; Y, Z)=I(X ; Z) + I(X ; Y | Z)
+\]
+
+Conditional MI identities:
+\[
+\begin{split}
+I(X ; Y|Z)
+&= \expect[Z]{\kl{p(x,y|z)}{p(x|z)p(y|z)}} \\
+&= H(X, Z) + H(Y, Z) - H(X, Y, Z) - H(Z) \\
+&= H(X|Z) - H(X|Y, Z) \\
+&= H(X|Z) + H(Y|Z) - H(X, Y|Z) \\
+\end{split}
+\]
+
+Conditional entropy:
+\[
+H_{p}(y | z) :=\mathbb{E}_{y, z \sim p(y, z)}[-\log p(y | z)]
+\]
+
+Conditional cross-entropy:
+\[
+H_{p, q}(y | z) := \mathbb{E}_{y, z \sim p(y, z)}[-\log q(y | z)]
+\]
+
 
 \section{Information Bottleneck as such}
 \subsection{Origins and formulation}
@@ -97,7 +135,7 @@ P(X|Z,Y) = P(X|Z)
 \end{proposition}
 
 In other words, we are getting a minimal sufficient representation by optimizing Lagrangian in the limit $\beta \to \infty$.
-The proof of this theorem is split into two lemmas.
+The proof of this theorem is split into two lemmas \cite{IB_learning_and_generalization}.
 
 \begin{lemma}
     $Z$ is a sufficient statistic of $X$ for $Y$ iff $I(Z;Y) = I(X;Y)$.
@@ -196,6 +234,124 @@ This means that $Z(x_1) \sim Z(x_2)$, which in turn means that $T(x_1) = T(x_2)$
 
 The following theorem gives us a hope to build invariant and disentangled representations.
 Informally, it says that if we can build sufficient and minimal representations (which we are building by optimizing IB Lagrangian, for example), then we get invariant and disentangled ones.
+
+\begin{proposition}
+If $\eta$ is a nuisance for the task $y$ and $z$ is a sufficient representation of $x$ and we have a Markov chain $\eta \to x \to z$, then
+\[
+I(z;\eta) \leq I(z;x) - I(x;y)
+\]
+
+Moreover, if $y$ is discrete, then
+\end{proposition}
+
+\begin{proof}
+As we have a Markov chain $(y,\eta) \to x \to z$ then by DPI $I(z;y,\eta) \leq I(z;x)$.
+By chain rule we have
+\[
+I(z; \eta) = I(z; y, \eta) - I(z; y | \eta) \leq I(z;x) - I(z; y | \eta)
+\]
+
+By definition of nuisance $y \perp \eta$ so $I(z;y|\eta) \geq I(z;y)$, because (by one of identities for conditional MI):
+\[
+\begin{split}
+I(z;y|\eta)
+&= H(y|\eta) - H(y|z,\eta) \\
+&= H(y) - H(y|z,\eta) \\
+&\geq H(y) - H(y|z) \\
+&= I(z;y)
+\end{split}
+\]
+
+As $z$ is sufficient, i.e. $I(x;y) = I(z;y)$ we obtain
+\[
+I(z;\eta) \leq I(z;x) - I(z; y | \eta) \leq I(z;x) - I(z;y) = I(z;x) - I(x;y)
+\]
+
+Now consider, that we have $p(x;y)$ and $y$ is discrete.
+Then by task-nuisance decomposition lemma we can introduce a nuisance $\eta$ s.t. $x = f(y;\eta)$ and $f$ is deterministic.
+That's why we have
+\[
+I(z;x) = I(z; y, \eta) = I(z;\eta) + I(z; y | \eta)
+\]
+Rearranging terms we get
+\[
+I(z;\eta) = I(z;x) - I(x;y|\eta) = I(z;x) - I(x;y) - \underbrace{(I(x;y|\eta) - I(x;y))}_\varepsilon
+\]
+
+Let's prove that $0 \leq \varepsilon \leq H(y|x)$.
+By definition of $\varepsilon$:
+\begin{align*}
+\varepsilon &= I(z;y|\eta) - I(x;y)
+\shortintertext{Since $y|\eta \to x|\eta \to z|\eta$ is a Markov chain, then by DPI:}
+&\leq I(x;y|\eta) - I(x;y) \\
+&= H(y|\eta) - H(y|x,\eta) - H(y) + H(y|x) \\
+&= H(y) - H(y|x,\eta) - H(y) + H(y|x) \\
+&= H(y|x) - H(y|x,\eta) \\
+%\shortintertext{Since $y$ is discrete and $H(y|x,\eta) \geq 0$:}
+%\shortintertext{TODO: actually, to measure information-theoretic things between discrete and continuous r.v. we should convert discrete to delta-distribution, so $H(y|x,\eta)$ can be negative.}
+\shortintertext{The last inequality is subtle, actually. We use the fact $H(y|x) - H(y|x,\eta) = I(y; \eta, x) \geq 0 \Rightarrow H(y|x) \geq H(y|x,\eta)$. And $\epsilon \geq 0$ follows from equation proved above: $I(z;y|\eta) \geq I(z;y) = I(x;y)$. That's why $H(y|x) \geq 0$, because it's a valid upper bound.}
+&\leq H(y|x)
+\end{align*}
+
+\end{proof}
+
+What does it give us? Does it give us invariance and disentanglement?
+First of all, we see, that as more minimal our $z$ the more invariant it is, because minimal sufficient statistic implies that $I(x;z)$ is the most minimal possible!
+And the first term is the only term we can influence with our $z$.
+
+Unfortunately, it does not give us disentanglement yet.
+To ensure disentanglement we need additional assumptions.
+But before diving into it, let's think about how can we achieve invariance with what we already now?
+
+\begin{corollary}
+Minimizing IB Lagrangian with $\beta \to 0$
+\[
+H(y|z) + \beta I(x;z)
+\]
+\end{corollary}
+
+\begin{proof}
+This is true by theorem proved above.
+\end{proof}
+
+Introducing bottlenecks by adding noise or reducing dimensionality.
+TODO: shouldn't we prove that bottlenecks reduces MI?
+\begin{corollary}
+Imagine we have a Markov chain $(y,\eta) \to x \to z_1 \to z_2$ and $I(z_1;z_2) < I(x; z_1)$, i.e. there is some bottleneck on the road between $z_1 \to z_2$. Then if $z_2$ is sufficient, it is more invariant    
+\end{corollary}
+
+\begin{proof}[Bottlenecks promote invaraince]
+\begin{align*}
+I(z_2;\eta) &\leq I(z_2;z_1) - I(z_1,y) = I(z_2; z_1) - I(x, y) < I(z_1; x) - I(x,y)
+\end{align*}
+\end{proof}
+
+\begin{corollary}
+Imagine setup above.
+If $y$ is discrete and is a deterministic function of $x$, then inequality is strict.
+\end{corollary}
+
+\begin{proof}
+We have
+\[
+\begin{split}
+I(z_2; \eta) \leq I(z_2; z_1) - I(x;y) < I(z_1; x) - I(x;y) = I(z_1; \eta) + \varepsilon
+\end{split}
+\]
+Since $y$ is a deterministic function of $x$ then $\varepsilon = 0$, hence the desired result.
+\end{proof}
+
+\begin{corollary}[Stacking increases invariance]
+Consider we a have a Markov chain of layers
+\[
+(y,\eta) \to x \to z_1 \to ... \to z_l
+\]
+If $z_L$ is still sufficient, then it's more invariant.
+\end{corollary}
+
+TODO:
+Well, this is because we have a Markov chain $\eta \to ... \to z_l$, it's not a corollary:
+$I(\eta; z_l) \leq I(\eta; z_i)$.
 
 \section{Information in the weights}
 \subsection{Properties}
