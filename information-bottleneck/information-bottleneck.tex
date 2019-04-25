@@ -121,7 +121,7 @@ We have the following optimization problem:
 
 There is an interesting statement which connects notion of \textit{sufficiency} and \textit{minimality} of $Z$ in the $\beta \to \infty$ setting.
 Let denote by $F(X)$ all random mappings of $X$ (this means, that for $f \in F(X)$ we have Markov chain $Y \to X \to f(X)$).
-Let $S_X(Y)$ be a set of all sufficient statistics of $X$ for $Y$.
+Let $S_Y(X)$ be a set of all sufficient statistics of $X$ for $Y$.
 
 \begin{proposition}
 If $Z$ is a solution to
@@ -142,7 +142,7 @@ The proof of this theorem is split into two lemmas \cite{IB_learning_and_general
 \end{lemma}
 
 \begin{proof}
-Imagine that $T \in S_X(Y)$.
+Imagine that $T \in S_Y(X)$.
 For any $Z \in F(X)$ we have a Markov chain $Y \to X \to Z$, so by DPI we have $I(Y;Z) \leq I(Y;X)$.
 But by sufficient statistic property we have $P(X|Z,Y) = P(X|Y)$, so we have a Markov chain $Y \to Z \to X$.
 Again by DPI we have $I(Y;Z) \leq I(Y;X)$, so $I(Y;Z) = I(Y;X)$.
@@ -159,20 +159,20 @@ I(Y:Z|X) &\triangleq \expect[X]{\kl{p(Y,Z|X)}{p(Y|X)p(Z|X)}} \\
 
 Now, by chain rule for MI we have:
 \[
-I(Y : X,Z) = I(Y : X) + I(Y,X|Z) = I(Y : X) + I(Y,Z|X) \Longrightarrow I(Y,X|Z) = I(Y,Z|X) = 0
+I(Y : X,Z) = I(Y : Z) + I(Y,X|Z) = I(Y : X) + I(Y,Z|X) \Longrightarrow I(Y,X|Z) = I(Y,Z|X) = 0
 \]
 Applying definition of conditional MI again we get $p(Y,X|Z) = p(Y|Z)p(X|Z)$.
-And this means that $Z \in S_X(Y)$:
+And this means that $Z \in S_Y(X)$:
 \[
 p(X|Y,Z) = \frac{p(X,Y|Z)}{p(Y|Z)} = \frac{p(X|Z) p(Y|Z)}{p(Y|Z)} = p(X|Z)
 \]
 \end{proof}
 
-Let's denote by $S_X^*(Y)$ a set of minimal sufficient statistics of $X$ for $Y$.
+Let's denote by $S_Y^*(X)$ a set of minimal sufficient statistics of $X$ for $Y$.
 \begin{lemma}
-Let $Z \in S_X(Y)$, then
+Let $Z \in S_Y(X)$, then
 \[
-Z \in S_X^*(Y) \Longleftrightarrow I(X;Z) = \min_{T \in S_X(Y)} I(X;T)
+Z \in S_Y^*(X) \Longleftrightarrow I(X;Z) = \min_{T \in S_Y(X)} I(X;T)
 \]
 \end{lemma}
 
@@ -182,11 +182,11 @@ Then for any other sufficient statistic $T$ we have $Z = f(T)$ for some $f$.
 Then we get a Markov chain $X \to T \to Z$ and by DPI we have $I(X;Z) \leq I(X;T)$.
 
 Now, let's prove reverse direction of the claim.
-Imagine, that $Z \in S_X(Y)$ but is not minimal.
-We are going to show, that $\exists T \in S_X(Y)$ such that $I(X;Z) > I(X;T)$.
+Imagine, that $Z \in S_Y(X)$ but is not minimal.
+We are going to show, that $\exists T \in S_Y(X)$ such that $I(X;Z) > I(X;T)$.
 By Fisher-Neyman factorization theorem we have
 \[
-Z \in S_X(Y) \Longleftrightarrow \exists\ h_Z, g_Z \text{ s.t. } \forall x,y \quad p(x|y) = h_Z(x) g_Z(Z(x), y)
+Z \in S_Y(X) \Longleftrightarrow \exists\ h_Z, g_Z \text{ s.t. } \forall x,y \quad p(x|y) = h_Z(x) g_Z(Z(x), y)
 \]
 
 Let's define an equivalence relation
@@ -211,7 +211,7 @@ p(x|y) = h_Z(x) g_Z(Z(x), y) = h_Z(x) \frac{g_Z(Z(x), y)}{g_T(T(x), y)} g_T(T(x)
 Hence $T$ is a sufficient statistic.
 
 Now let's show that $I(X;Z) > I(X;T)$.
-Since $Z$ is not minimal, then there is such $R \in S_X(Y)$ that $Z$ is not a function of $R$.
+Since $Z$ is not minimal, then there is such $R \in S_Y(X)$ that $Z$ is not a function of $R$.
 Let's show, that $T$ is a function of $R$ (btw, this will show, that $T$ is minimal).
 For this we are going to show that if $R(x_1) = R(x_2)$ then $T(x_1) = T(x_2)$: this would allow us to build a function $\phi:\mathcal{R} \to \mathcal{T}$ which just take value $r$, find it's preimage $R^{-1}(r)$, take any sample $x \in R^{-1}(r)$ and compute $T(x)$.
 For any $x_1, x_2$ such that $R(x_1) = R(x_2)$ we have:
@@ -447,16 +447,156 @@ Well, this is because we have a Markov chain $\eta \to ... \to z_l$, it's not a 
 $I(\eta; z_l) \leq I(\eta; z_i)$.
 
 \section{Information in the weights}
-\subsection{Properties}
-\subsection{Minimum description length}
-\subsection{Connection to representations}
+\subsection*{Information decomposition}
+Consider a data distribution $(X,Y) = D \sim p(D|\theta)$.
+We say that our model is:
+
+\begin{equation}\label{eq:model-def}
+p(D, \theta, w) = p(\theta) p(D|\theta) p_\phi(w| D)
+\end{equation}
+
+for some true unknown parameters $\phi$.
+Here $p_\phi(w|D)$ is our distribution on the weights of NN --- it is not deterministic due to the randomness of the optimization process.
+From this we can see that $p_\phi(w|D)$ is different from $p(w|D)$, which we would be computed if we'd have $p(D|w)$ to define our model (which is not).
+This is a very big source of confusion.
+
+If we have some weights and an input $X$, then our model defines a distribution $q(Y|X,w)$.
+We want it to be as close as possible to $p(Y|X,w)$, which is computed from \eqref{eq:model-def}.
+
+\begin{theorem}
+Let $D = (X,Y)$ be a fixed dataset.
+Then
+\begin{equation}
+H_{p,q}(Y|X,w) = \underbrace{H(Y|X,\theta)}_{\text{intrinsic error}} + \underbrace{I(\theta; Y | X,w)}_{\text{sufficiency}} + \underbrace{\expect[X,w]{\kl{p(Y|X,w)}{q(Y|X,w)}}}_{\text{efficiency}} - \underbrace{I(Y,w|X,\theta)}_{\text{overfitting}}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Cross-entropy can be written as
+\begin{equation}
+\begin{split}
+H_{p,q}(Y|X,w)
+&= \expect[p(Y,X,w)]{-\log q(Y|X,w)}
+\\
+&= \expect[p(Y,X,w)]{-\log p(Y|X,w)} + \expect[p(Y,X,w)]{\log\frac{p(Y|X,w)}{q(Y|X,w}}
+\\
+&= H_p(Y|X,w) + \expect[X,w]{\kl{p(Y|X,w)}{q(Y|X,w)}}
+\end{split}
+\end{equation}
+
+Let's prove the rest.
+Since $I(X;Y|Z) = H(X|Z) - H(X|Y,Z)$ (analog of $I(X;Y) = H(X) - H(X|Y)$), we can see that:
+\[
+H_p(Y|X,w) = I(Y;\theta | X,w) + H(Y|X,w,\theta)
+\]
+
+Applying the same identity to $I(Y;w|X,\theta)$ we obtain
+\[
+H(Y|X,w,\theta) = H_p(Y|X,\theta) - I(Y;w|X,\theta)
+\]
+hence the desired result:
+\[
+H_p(Y|X,w) = I(Y;\theta | X,w) + H_p(Y|X,\theta) - I(Y;w|X,\theta)
+\]
+\end{proof}
+
+Why do we call the terms so?
+\begin{enumerate}
+    \item $H(Y|X,\theta)$ --- intrinsic error: just some constant, which does not depend on $w$. This is the error we would get if we would know true data distribution.
+    \item $I(\theta; Y | X,w)$ --- sufficiency: how much information does $w$ know about $\theta$ when it sees a dataset. Why is it so? Remember the definition of sufficiency that we had: $P(A|B,\psi) = P(A|B)$ which is equivalent to $I(A : \psi |B ) = H(A | B) - H(A | B, \psi) = 0$. Let's apply this to $p(Y|\theta, w, X)$. We want to measure $I(Y:\theta | w, X) = H(Y | w, X) - H(Y | \theta, w, X)$. If it is low, then we have $p(Y | \theta, w, X) \approx p(Y | w, X)$, i.e. $\theta$ is very well captured by $w$, i.e. $w$ is a sufficient statistic for $\theta$ of $Y$ (we assume, that we always know $X$). Besides, there is an often assumption about $p(X,\theta) = p(X)p(\theta)$, i.e. features $X$ are generated independently.
+    \item $\expect[X,w]{\kl{p(Y|X,w)}{q(Y|X,w)}}$ --- efficiency: how efficient is it to use neural networks of the kind $f_w$ to approximate true data distribution. It shows how close our approximation $q(Y|X,w)$ is to a true $p(Y|X,w)$ data distribution, obtained from model \eqref{eq:model-def}.
+    \item $I(Y,w|X,\theta)$ --- overfitting: shows, how much uninformative information does $w$ memorizes about $y$. Why it shows only uninformative information? Because in this term we assume that both $\theta$ and $X$ are known. So, imagine, that we know $\theta$ and $X$ --- this means, that we know everything good we can about $p(Y|X,\theta)$. But the weights $w$ are trying to memorize something more.
+\end{enumerate}
+
+So we see that NN can potentially solve the task (obtain good values of loss) just by maximizing overfitting term, i.e. memorizing the dataset.
+So what we do is just adding a regularization term
+\[
+L(\phi) = H_{p,q}(Y|X,w) + \beta I(w;D)
+\]
+Note that this term is not the same thing as $I(w;y|\theta, X)$, but we cannot do better.
+
+Unfortunately, $I(w;D)$ is intractable to compute (we need an expectation over all datasets and all training procedures), so we add an upper bound
+\begin{equation}
+\begin{split}
+I(w; D) &= \expect[D]{\kl{p_\phi(w|D)}{p_\phi(w)}}
+\\
+&\leq \expect[D]{\kl{p_\phi(w|D)}{p_\phi(w)}} + \kl{p_\phi(w)}{p(w)}
+\\
+&= \expect[D]{\kl{p_\phi(w|D)}{p(w)}}
+\end{split}
+\end{equation}
+
+Here $p(w)$ is any distribution on the weights.
+We would like to take factorized distribution, so it's easier to compute: $p(w) = \prod p(w_i)$.
+Ideally we would like to take factorized marginal $\prod p_\phi(w_i)$, because it's closest factorized distribution (TODO: prove it).
+We could approximate this distribution by training model several times, but it's also costly and we just choose a (somewhat arbitrary) prior.
+So, for some factorized prior $p(w) = \prod p(w_i)$ we have a loss
+\[
+L(\phi) = H_{p,q}(Y|X,w) + \beta \kl{p_\phi(w|D)}{p(w)}
+\]
+
+\subsection*{Model assumptions and upper bounding the loss}
+We choose our $q(w|D)$ to be parametrized as
+\[
+w|D \sim \epsilon \hat{w}, \qquad \epsilon \sim \log \mathcal{N}()
+\]
+
+The main benefit of it is that $I(w;D)$ now can be written in closed form up to an arbitrary constant:
+\[
+123
+\]
+
+Authors say, that although this setup leads to arbitrary constant $C$, we could use truncated log-uniform or just gaussian multiplicative noise instead (in the former case MI would be intractable, but can be very closely approximated).
+
+Our prior distribution $q(w)$ is factorized log-uniform:
+\[
+q(w) = \tilde{q}(w) = \prod_{i=1}^n q(w_i) \qquad q(w_i) = \frac{c}{|w_i|}
+\]
+
+\subsection*{Flat minima}
+\begin{theorem}
+Flat minima has low information.
+\end{theorem}
+
 
 \section{Mutual information estimators}
-\subsection{Binning}
+TBD.
+%\subsection{Binning}
+%
+%\subsection{MINE}
+%
+%\subsection{MI estimator under gaussian convolutions}
+%
+%\subsection{EDGE}
 
-\subsection{MINE}
+\section{Appendix}
+\subsection*{Why improper prior}
+Uninformative prior is a prior which, rouhghly speaking, does not give any preferences in the r.v. values.
+For finite discrete case uninformative prior is easy to define: it's just $P_i = 1/k$ where $k$ is the number of outcomes.
+But what to do when our support is countable or continuous?
 
-\subsection{MI estimator under gaussian convolutions}
+We can use improper priors as uninformative priors for continuous distributions.
+For example, log-uniform prior.
+Consider $p(\log x) = c$, or, which is equivalent:
+\[
+p(x) = p(\log x) \cdot \frac{d\log x}{dx} = c / x
+\]
+
+Authors say, that we can use improper prior for the weights and tell, that it is often the case in practice, referring the reader to their previous paper \cite{Information_Dropout}.
+But in this paper they only showed that it's fine to use it for activations, not weights!
+
+\subsection*{Kurtosis}
+What is kurtosis (excess coefficient)?
+\[
+\gamma_2 = \text{Kurt}[X] = \frac{\expect{(X - \mu)^4}}{\sigma^4} - 3
+\]
+It shows, how ``picked'' our distribution is compared to $\mathcal{N}(0,1)$, which has zero kurtosis.
+A similar notion is \textit{skeweness} (assymmetry coefficient), which is defined as
+\[
+\gamma_1 = \frac{\expect{(X - \mu)^3}}{\sigma^3}
+\]
+Symmetric distributions (with finite third moment) have skeweness of 0.
+
 
 \section{Bibliography}
 \printbibliography
