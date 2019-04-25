@@ -319,7 +319,7 @@ It was pusblished on ICLR 2019, but got somewhat ``retracted''.
 \end{remark}
 
 
-\section{Disentangled representations}
+\section{Invariant representations}
 
 The following theorem gives us a hope to build invariant and disentangled representations.
 Informally, it says that if we can build sufficient and minimal representations (which we are building by optimizing IB Lagrangian, for example), then we get invariant and disentangled ones.
@@ -389,6 +389,10 @@ By definition of $\varepsilon$:
 \end{proof}
 
 What does it give us? Does it give us invariance and disentanglement?
+We see that
+\[
+I(z;\eta) \approx \underbrace{I(z;x)}_{\text{sufficiency}} - \underbrace{I(z;y)}_\text{minimality}
+\]
 First of all, we see, that as more minimal our $z$ the more invariant it is, because minimal sufficient statistic implies that $I(x;z)$ is the most minimal possible!
 And the first term is the only term we can influence with our $z$.
 
@@ -509,6 +513,10 @@ Why do we call the terms so?
 \end{enumerate}
 
 So we see that NN can potentially solve the task (obtain good values of loss) just by maximizing overfitting term, i.e. memorizing the dataset.
+For successful training variable $w$ should only memorize $\theta$, i.e. we need $I(w;D) = I(D;\theta) \leq H(\theta)$.
+For overfitting we need the term $I(\bm y; w | \bm x, \theta) \leq I(w; D | \theta)$ to grow linearly with the size of the dataset.
+It's obvious that $I(\bm y; w | \bm x, \theta) \leq I(w; D | \theta)$, because we use more information in RHS (if you want it strictly: just apply a chain rule).
+It's also obvious that it should grow linearly, because it factorizes into sum of MIs (because empirical distribution factorizes).
 So what we do is just adding a regularization term
 \[
 L(\phi) = H_{p,q}(Y|X,w) + \beta I(w;D)
@@ -536,28 +544,209 @@ L(\phi) = H_{p,q}(Y|X,w) + \beta \kl{p_\phi(w|D)}{p(w)}
 \]
 
 \subsection*{Model assumptions and upper bounding the loss}
-We choose our $q(w|D)$ to be parametrized as
+We choose our $p_\phi(w|D)$ to be parametrized as
 \[
-w|D \sim \epsilon \hat{w}, \qquad \epsilon \sim \log \mathcal{N}()
+w|D \sim \epsilon \hat w, \qquad \epsilon_i \sim \log \mathcal{N}(-\frac{\alpha_i}{2}, \alpha_i)
+\Longrightarrow
+\begin{cases}
+\expect{\epsilon} &= e^{\mu + \sigma^2/2} = 1 \\
+\var{\epsilon} &= (e^{\sigma^2} - 1)e^{2\mu + \sigma^2} = e^\alpha - 1
+\end{cases}
+\]
+We have chosen such a distribution for $\epsilon$, so $\expect{w_i|D} = \hat w_i$, where $\hat w_i$ is a learned mean.
+The main problem here is that our $p_\phi(w|D)$ is factorized, which makes it highly limited.
+It's easy to see that $p(w|D)$ is log-normal, since
+\[
+\xi \sim \log \mathcal{N}(\mu, \sigma^2), c \in \R \Longrightarrow c \cdot \xi \sim \log \mathcal{N}(\mu + \ln c, \sigma^2)
+\]
+(which follows from the fact that $c\cdot\xi = c\cdot e^{\mu + \sigma \tau} = e^{\ln c + \mu + \sigma \tau}$, where $\tau \sim \mathcal{N}(0, 1)$).
+
+Our prior distribution $p(w)$ is factorized log-uniform (i.e. logarithm of this distribution is uniform):
+\[
+p(w) = \prod_{i=1}^n p(w_i) \qquad p(w_i) = \frac{c}{|w_i|}
 \]
 
-The main benefit of it is that $I(w;D)$ now can be written in closed form up to an arbitrary constant:
-\[
-123
-\]
+Let's denote $\tilde I(w;D) = \kl{p_\phi(w|D)}{\prod p(w_i)}$.
+The main benefit of our parametrization is that $\tilde I(w;D)$ now can be written in closed form up to an arbitrary constant:
+\begin{equation}\label{eq:computable-mi}
+\begin{split}
+\tilde I(w;D) &= \kl{p_\phi(w|D)}{\prod p(w_i)}
+\\
+&= \kl{p_\phi(\log w|D)}{\prod p(\log w_i)}
+\\
+&= \kl{\mathcal{N}(-\frac{\alpha}{2}, \alpha I)}{c^k}
+\\
+&= H(\mathcal{N}(-\frac{\alpha}{2}, \alpha I) || c^k) - H(\mathcal{N}(-\frac{\alpha}{2}, \alpha I))
+\\
+&= \expect{\log c^k} - \sum_{i=1}^k \frac{1}{2}\log 2\pi e \alpha_i
+\\
+&= -\sum \frac{1}{2}\log \alpha_i + const
+\end{split}
+\end{equation}
+Here we used the fact that $H(\mathcal{N}(\mu, \sigma^2)) = \frac{1}{2}\log 2\pi e \sigma^2$.
+One can note that MI can be negative, although derivation may seem plausible.
+Remember that $\kl{p}{q}$ is defined only for absolutely continuous distributions ($q(x) = 0 \Rightarrow p(x) = 0$), which is not the case when $p$ is Normal and $q$ is uniform, unless we have a uniform distribution on the whole $\R$, which is improper.
 
+As our prior is improper, this constant can be arbitrary.
 Authors say, that although this setup leads to arbitrary constant $C$, we could use truncated log-uniform or just gaussian multiplicative noise instead (in the former case MI would be intractable, but can be very closely approximated).
 
-Our prior distribution $q(w)$ is factorized log-uniform:
+What we immediately see from this is that
 \[
-q(w) = \tilde{q}(w) = \prod_{i=1}^n q(w_i) \qquad q(w_i) = \frac{c}{|w_i|}
+I(w;D) \leq \tilde I(w;D) = -\frac{1}{2}\sum \log \alpha_i + const
 \]
+
+So information in the weights is bounded.
+Let's define
+\[
+J(w;D) = -\frac{1}{2}\sum \log \alpha_i
+\]
+because this is what we'll use in practice and it's related to information.
+
+\subsection*{Experiments}
+
+Next, authors conduct experiments similar in nature to \cite{We_dont_know_what_generalization_is}.
+The claim is the following: if the model is not allowed to memorize the data (if $I(w;D)$ is low) then it does not overfit.
+To prove the claim they do the following experiments:
+\begin{enumerate}
+    \item Take CIFAR-10, randomly permute some portion of labels
+    \item Choose some value for $\beta$
+    \item Train and watch the values of $\alpha_i$, because we are going to measure MI with them.
+    \item If $Y$ is completely random, then $I(w;Y|X,\theta) = I(Y;w) \leq I(w;D)$. The first equality works because $H(Y|w,X,\theta) = H(Y|w)$. Remember our loss decomposition. When $\beta = 1$ we just cancel the overfitting term. When $\beta < 1$ it's always beneficial to overfit. When $\beta > 1$ it's beneficial to learn the true data. Their empirical results suggests that this really works in practice (even when we use upper bounding and a lot of assumptions).
+\end{enumerate}
+
+Authors got the following plots
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{emergence_of_invariance_MI_experiments}
+\end{figure}
+
+It's interesting to see that model is forced to memorize more information when there are more corrupted labels.
+And it's very interesting that although we have an upper bound, $\beta = 1$ is still a critical regime.
+
+\begin{remark}
+Authors do not compare to just a plain Dropout.
+Looks like it works too.
+In original paper by \cite{We_dont_know_what_generalization_is} InceptionV3 with dropout overfits very well on random ImageNet-1000, but authors do not say what dropout rate they used.
+In our setup for a very large value of $\beta$ we force our posterior to be just prior, which makes it not surprising that we can't fit random labels.
+For high values of $\beta$ can we fit non-random labels? Yes, because amount of information needed to fit them is much less.
+\end{remark}
+
+\subsection*{Duality of the bottleneck}
+The following three theorems suggests that by minimizing information in the weights we obtain both sufficiency and disentanglement.
+\begin{theorem}
+Let $z = Wx$ and our model setup.
+Further assume that $q(z_i)$ and $q(z_i|x)$ are normally distributed.
+Then
+\begin{equation}
+\begin{split}
+I(z;x) + TC(z)
+&= \sum_{i=1}^{\dim z}\expect[z]{\kl{\mathcal{N}(\mu_i, \sigma_i^2)}{\mathcal{N}(\nu_i, s_i^2)}}
+\\
+&= -\frac{1}{2}\sum_{i=1}^{\dim z} \expect[x]{\log \frac{\var{\epsilon} \langle \hat W_i^2, x^2 \rangle}{\hat W_i^\top \Sigma_x \hat W_i + \var{\epsilon} \langle\hat W_i^2 , \expect{x^2}\rangle}}
+\end{split}
+\end{equation}
+Here $W_i$ is the $i$-th row of $W$.
+\end{theorem}
+
+This means that $I(z;x) + TC(z)$ is a monotone decreasing function of $\alpha_i$, because $\var{\epsilon} = \tilde\alpha = e^\alpha - 1$ (because it's more beneficial for us to decrease $\alpha$, so $\log$ term becomes $-\infty$ and since it's negative we get $+\infty$.
+
+\begin{proof}
+First prove for $\dim z = 1$ (TBD), then notice that
+\[
+I(x;z) + TC(z) = \expect[z]{\kl{\prod q(z_i | x)}{\prod q(z_i)}} = \sum_{i=1}^{\dim z} \expect[x]{\kl{q(z_i | x)}{q(z_i)}} = \sum_{i=1}^{\dim z} I(z_i;x)
+\]
+\end{proof}
+
+The following theorem shows that $I(z;x) + \text{TC}(z)$ can be uniformly bounded by $I(w;D)$.
+\begin{theorem}[Uniform bound for one layer]
+Let $z = Wx$, use our model assumptions and assumptions from theorem above.
+Additionally assume that $\Sigma_x = \cov{x}$ is diagonal and that it's forth moment is finite.
+Then there is a strictly increasing function $g(\alpha) = \frac{1}{2}\log (1 - e^{-\alpha})$ s.t.
+\begin{equation}
+    g(\alpha) \leq \frac{I(x;z) + \text{TC}(z)}{\dim z} \leq g(\alpha) + c
+\end{equation}
+
+Here $c = O(1/\dim x) \leq 1$ and $\alpha \approx e^{-I(w;D) / \dim z}$ (which we got from \eqref{eq:computable-mi}).
+\end{theorem}
+
+This means that $I(z;x) + \text{TC}(z)$ is tightly bounded by $I(w;D)$ and increases strictly with it.
+
+\begin{proof}
+We are going to prove this theorem for $\dim z = 1$, because it will be straightforward how to generalize it.
+Let $w$ is our weight row.
+First of all, since $\Sigma_x$ is diagonal we have
+\[
+\hat{w}^\top \Sigma_x \hat{w} = \sum w_i^2 \var{x_i} = \sum w_i^2 (\expect{x_i^2} - \expect{x_i}^2) \leq \langle w^2, \expect{x^2} \rangle
+\]
+
+Now we can see, that
+\begin{equation}
+\begin{split}
+I(z;x)
+&= -\frac{1}{2}\expect[x]{\log \frac{\tilde \alpha \langle \hat w^2, x^2 \rangle }{\langle \hat w, \Sigma_x \hat w \rangle + \tilde \alpha \langle \hat w^2, \expect{x^2} \rangle}}
+\\
+&\leq -\frac{1}{2}\expect[x]{\log \frac{\tilde \alpha \langle \hat w^2, x^2 \rangle }{(1 + \tilde \alpha) \langle \hat w^2, \expect{x^2} \rangle}}
+\\
+&= \frac{1}{2}\log(1 + \frac{1}{\tilde\alpha}) - \frac{1}{2}\expect[x]{\log \frac{\langle \hat w^2, x^2 \rangle }{\langle \hat w^2, \expect{x^2} \rangle}}
+\\
+&= \frac{1}{2}\log(1 + \frac{1}{\tilde\alpha}) - \frac{1}{2}\expect[x]{\log \left(1 + \frac{\langle \hat w^2, (x^2 - \expect{x^2}) \rangle }{\langle \hat w^2, \expect{x^2} \rangle}\right)}
+\end{split}
+\end{equation}
+
+Now we want to prove that the second term (expectation) is very small.
+For this we'll use Taylor series expansion.
+But first we must be sure, that the 4-th moment of it exists (we'll do Taylor series expansion up to 2nd term).
+Since it exists by assumption, we have for some $C$ that:
+\[
+\frac{\expect{(x_i^2 - \expect{x_i^2})^2}}{\expect{x_i^2}^2} \leq C
+\]
+
+Then:
+\begin{equation}
+\begin{split}
+\expect[x]{\log \left(1 + \frac{\langle \hat w^2, (x^2 - \expect{x^2}) \rangle }{\langle \hat w^2, \expect{x^2} \rangle}\right)}
+&\approx \expect[x]{\frac{\langle \hat w^2, (x^2 - \expect{x^2}) \rangle }{\langle \hat w^2, \expect{x^2} \rangle} - \left( \frac{\langle \hat w^2, (x^2 - \expect{x^2}) \rangle }{\langle \hat w^2, \expect{x^2} \rangle} \right)^2}
+\\
+&= -\expect[x]{\left( \frac{\langle \hat w^2, (x^2 - \expect{x^2}) \rangle }{\langle \hat w^2, \expect{x^2} \rangle} \right)^2}
+\\
+&= \var{\frac{\hat{w}^{2} \cdot\left(x^{2} - \mathbb{E}\left[x^{2}\right]\right)}{\hat{w}^{2} \cdot \mathbb{E}\left[x^{2}\right]}}
+\\
+&=\frac{\sum_{i} \hat{w}_{i}^{4} \mathbb{E}\left(x^{2}-\mathbb{E}\left[x^{2}\right]\right)^{2}}{\sum_{i, j} \hat{w}_{i}^{2} \hat{w}_{j}^{2} \mathbb{E}\left[x_{i}^{2}\right] \mathbb{E}\left[x_{j}^{2}\right]}
+\\
+& \leq C \frac{\sum_{i} \hat{w}_{i}^{4} \mathbb{E}\left[x_{i}^{2}\right]^{2}}{\sum_{i, j} \hat{w}_{i}^{2} \hat{w}_{j}^{2} \mathbb{E}\left[x_{i}^{2}\right] \mathbb{E}\left[x_{j}^{2}\right]}
+\\
+&=O(1 / \operatorname{dim}(x))
+\end{split}
+\end{equation}
+
+We used the fact, that Taylor series of $\log(1 + x)$ around $x_0 = 0$ is:
+\[
+\log(1+x) = \log (1 + 0) + \frac{1}{1 + 0} \cdot x - x^2/2 + O(x^3) = x - x^2 + O(x^3)
+\]
+
+Combining this together we get:
+\[
+I(x;z) \leq \frac{1}{2}\log(1 + \tilde\alpha^{-1}) + O(1/\dim(x))
+\]
+
+To generalize it on higher dimensions we again just use the fact
+\[
+I(x;z) + TC(z) = \sum_{i=1}^{\dim z} I(z_i;x)
+\]
+
+\end{proof}
+
+
+\begin{theorem}[Disentanglement for autoencoders \cite{Image_content_transfer_and_disentanglement}]
+Let use have an autoencoder $h(x) = d \circ e(x)$.
+\end{theorem}
 
 \subsection*{Flat minima}
 \begin{theorem}
-Flat minima has low information.
+Flat minima have low information.
 \end{theorem}
-
+TBD.
 
 \section{Mutual information estimators}
 TBD.
@@ -579,7 +768,7 @@ We can use improper priors as uninformative priors for continuous distributions.
 For example, log-uniform prior.
 Consider $p(\log x) = c$, or, which is equivalent:
 \[
-p(x) = p(\log x) \cdot \frac{d\log x}{dx} = c / x
+p(x) = p(\log x) \cdot \left|\frac{d\log x}{dx}\right| = c / |x|
 \]
 
 Authors say, that we can use improper prior for the weights and tell, that it is often the case in practice, referring the reader to their previous paper \cite{Information_Dropout}.
