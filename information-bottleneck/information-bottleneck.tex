@@ -737,6 +737,29 @@ I(x;z) + TC(z) = \sum_{i=1}^{\dim z} I(z_i;x)
 
 \end{proof}
 
+Now we would like to generalize it on multi-layer case.
+\begin{theorem}
+Let $W^k$ be our weight matrices for $k = 1, ..., L$ with model assumptions and assumptions above.
+We can use any non-linearity $\psi$ for $z_{k+1} = \psi(W^k z_k)$.
+Then:
+\[
+I(z_L; x) \leq \min_{k < L}\left[ \dim z_k \cdot (g(\alpha^k) + 1) \right]
+\]
+Here $\alpha^k = e^{-I(W^k; D) / \dim W^k}$.
+\end{theorem}
+
+\begin{proof}
+We have Markov chain $x \to z_1 \to ... \to z_L$.
+By DPI we have
+\[
+I(z_L;x) \leq \min_{k < L} I(z_{k+1}, z_k)
+\]
+Besides, applying deterministic function can only decrease the information, so
+\[
+I(z_{k+1}; z_k) \leq I(\psi(W^k z_k); z_k) \leq I(W^k z_k; z_k) \leq g(\alpha^k) + c
+\]
+\end{proof}
+
 
 \begin{theorem}[Disentanglement for autoencoders \cite{Image_content_transfer_and_disentanglement}]
 Let use have an autoencoder $h(x) = d \circ e(x)$.
@@ -806,6 +829,8 @@ Symmetric distributions (with finite third moment) have skeweness of 0.
     \item Prove that $I(X;T)$ is either infinity or constant (except measure zero of weights).
     \item Prove DPI
     \item IB solution is a minimal sufficient statistic (based on http://www.cs.huji.ac.il/labs/learning/Papers/ibgen.pdf, theorem 5)
+    \item Prove ``generalized DPI'' from the last theorem.
+    \item Prove that applying deterministic function cannot increase the MI.
 \end{enumerate}
 
 \end{document}
