@@ -9,40 +9,50 @@
 %\maketitle
 
 \section{Information Theory basics}
-Here we will give all the required definitions and their properties.
+%Here we will give all the required definitions and their properties.
 
 \begin{definition}
-\textbf{Entropy} H(X) of a discrete random variable $X$ with probability mass function $p(X)$ is the quantity
+\textit{Entropy} H(X) of a discrete random variable $X$ with probability mass function $p(X)$
 \[
 H(X) = \expect[p(x)]{-\log p(x)}
 \]
 \end{definition}
 
 \begin{definition}
-\textbf{Differential entropy} of a random variable $X$ with probability density function $p(x)$ is the quantity
+\textit{Differential entropy} of a random variable $X$ with probability density function $p(x)$ is the quantity
 \[
 H(X) = \expect[p(x)]{-\log p(x)}
 \]
 \end{definition}
 
-Mutual information:
+\begin{definition}
+\textit{Mutual information} identities:
 \[
 \begin{split}
 I(X;Y)
+&= \kl{p(x,y)}{p(x)p(y)} \\
 &= H(X) - H(X|Y) \\
 &= H(Y) - H(Y|X) \\
-&= \kl{p(x,y)}{p(x)p(y)} \\
 &= \text{TC}(p(x,y)) \\
 &= \expect[x]{\kl{p(y|x)}{p(y)}}
 \end{split}
 \]
+\end{definition}
 
+\begin{proposition}
 Chain rule for MI:
 \[
 I(X ; Y, Z)=I(X ; Z) + I(X ; Y | Z)
 \]
+\end{proposition}
+\begin{proof}
+\[
+\frac{p(x,y,z)}{p(x)p(y,z)} = \frac{p(x,z)p(y|x,z)}{p(x)p(z)p(y|z)} = \frac{p(x,z)}{p(x)p(z)} \frac{\frac{p(x|y,z)p(y|z)}{p(x|z)}}{p(y|z)} = \frac{p(x,z)}{p(x)p(z)} \frac{p(x|y,z)}{p(x|z)}
+\]
+\end{proof}
 
-Conditional MI identities:
+\begin{definition}
+\textit{Conditional MI} identities:
 \[
 \begin{split}
 I(X ; Y|Z)
@@ -52,17 +62,47 @@ I(X ; Y|Z)
 &= H(X|Z) + H(Y|Z) - H(X, Y|Z) \\
 \end{split}
 \]
+\end{definition}
 
-Conditional entropy:
+\begin{definition}
+\textit{Conditional entropy}:
 \[
-H_{p}(y | z) :=\mathbb{E}_{y, z \sim p(y, z)}[-\log p(y | z)]
+H_{p}(y | z) \triangleq \mathbb{E}_{y, z \sim p(y, z)}[-\log p(y | z)]
 \]
+\end{definition}
 
-Conditional cross-entropy:
+\begin{proposition}
+Conditioning reduces entropy.
+\end{proposition}
+\begin{proof}
+$H(x|y,z) = H(x|z) - I(x:y|z)$ and $I(x:y|z) \geq 0$.
+\end{proof}
+
+\begin{definition}
+\textit{Conditional cross-entropy}:
 \[
 H_{p, q}(y | z) := \mathbb{E}_{y, z \sim p(y, z)}[-\log q(y | z)]
 \]
+\end{definition}
 
+\begin{proposition}[Data-processing inequality (DPI)]
+If we have a Markov chain $X \to Y \to Z$, then $I(X;Z) \leq I(Y;Z)$.
+\end{proposition}
+\begin{proof}
+By chain rule we have:
+\begin{equation*}
+I(X:Y,Z) = I(X:Z|Y) + I(X:Y) = I(X:Y|Z) + I(X:Z)
+\end{equation*}
+Since we have a Markov chain, then $I(X:Z|Y) = 0$:
+\[
+I(X:Z|Y) = \expect[Y]{\expect[X|Y]{\kl{p(z|x,y)}{p(z|y)}}} = \expect[Y]{\expect[X|Y]{\kl{p(z|y)}{p(z|y)}}} = 0
+\]
+And we have this form of KL, because
+\[
+\frac{p(x,z|y)}{p(x|y)p(z|y)} = \frac{p(z|x,y)p(x|y)}{p(x|y)p(z|y)} = \frac{p(z|x,y)}{p(z|y)}
+\]
+
+\end{proof}
 
 \section{Information Bottleneck as such}
 \subsection{Origins and formulation}
@@ -109,6 +149,7 @@ For discrete case it can be shown \cite{Information_Bottleneck}, that it's a spe
     \item Two datasets which give us the same inference about sufficient statistic, would give the same inference about underlying parameter $\theta$.
     \item Any injective function of sufficient statistic is also a sufficient statistic.
     \item Factorization theorem says, that $p(x|y) = h_T(X) g_T(T(X), y)$, dependence in $g_T$ in $x$ is only through $T(x)$.
+    \item By definition we have $R$ is minimal iff $\forall T \in S_Y(X)$ there exists such function $f$ that $R = f(T)$.
 \end{itemize}
 
 \subsection{Sufficiency and minimality of representations}
@@ -271,36 +312,7 @@ But there are two problems with their experiments:
 \end{itemize}
 
 \subsection{Why MI is either constant or infinite}
-\begin{proposition}
-Consider a discrete distribution $x \sim p(x)$ (possible with countable support) and a NN
-\[
-f(x) = \sigma(...\sigma(W_2\sigma(W_1 x + b_1) + b_2)...)
-\]
-with some injective non-linearity $\sigma$ (sigmoid, tanh, LeakyReLU, SELU, etc).
-Then there is only measure-zero set of weights $W_1, ..., W_L, b_1, ..., b_L$ s.t. for some $x_i \neq x_j$ from $p(x)$ we get $f(x_i) = f(x_j)$.
-This means, that NN is injective for $p(x)$.
-\end{proposition}
-
-\begin{proposition}
-If NN is deterministic, then $I(z_l;x)$ is either constant (for descrete $x$) or infinite (for continuous $x$), regardless of training.
-\end{proposition}
-
-\begin{proof}
-Consider a discrete setting. Then
-\[
-I(z_l;x) = H(x) - H(x|z_l)
-\]
-
-We are going to prove that $H(x|z_l) \equiv 0$:
-\[
-H(x|z_l) = H(x|x) = 0
-\]
-We used the fact that since $z_l$ is an injective and deterministic mapping of $x$, then we can invert it (it is clearly surjective by design: we use only support of $z_l$).
-
-TODO: prove for continuous distribution.
-Looks like we'll need local injectivity (which should work for ReLU too since they are piecewise-linear?).
-And show that conditional entropy is $-\infty$ for some regions.
-\end{proof}
+See homework.
 
 \subsection{Remarks}
 \begin{remark}
@@ -322,7 +334,7 @@ It was pusblished on ICLR 2019, but got somewhat ``retracted''.
 \section{Invariant representations}
 
 The following theorem gives us a hope to build invariant and disentangled representations.
-Informally, it says that if we can build sufficient and minimal representations (which we are building by optimizing IB Lagrangian, for example), then we get invariant and disentangled ones.
+Informally, it says that if we can build sufficient and minimal representations (which we are building by optimizing IB Lagrangian, for example), then we get invariant and disentangled ones (main drawback is necessity of $I(z:y) = I(x:y)$).
 
 \begin{proposition}
 If $\eta$ is a nuisance for the task $y$ and $z$ is a sufficient representation of $x$ and we have a Markov chain $\eta \to x \to z$, then
@@ -375,14 +387,15 @@ Let's prove that $0 \leq \varepsilon \leq H(y|x)$.
 By definition of $\varepsilon$:
 \begin{align*}
 \varepsilon &= I(z;y|\eta) - I(x;y)
-\shortintertext{Since $y|\eta \to x|\eta \to z|\eta$ is a Markov chain, then by DPI:}
+\shortintertext{Since $y|\eta \to x|\eta \to z|\eta$ is a Markov chain (can be shown just by definition of MC), then by DPI:}
 &\leq I(x;y|\eta) - I(x;y) \\
 &= H(y|\eta) - H(y|x,\eta) - H(y) + H(y|x) \\
 &= H(y) - H(y|x,\eta) - H(y) + H(y|x) \\
 &= H(y|x) - H(y|x,\eta) \\
 %\shortintertext{Since $y$ is discrete and $H(y|x,\eta) \geq 0$:}
 %\shortintertext{TODO: actually, to measure information-theoretic things between discrete and continuous r.v. we should convert discrete to delta-distribution, so $H(y|x,\eta)$ can be negative.}
-\shortintertext{The last inequality is subtle, actually. We use the fact $H(y|x) - H(y|x,\eta) = I(y; \eta, x) \geq 0 \Rightarrow H(y|x) \geq H(y|x,\eta)$. And $\epsilon \geq 0$ follows from equation proved above: $I(z;y|\eta) \geq I(z;y) = I(x;y)$. That's why $H(y|x) \geq 0$, because it's a valid upper bound.}
+%\shortintertext{The last inequality is subtle, actually. We use the fact $H(y|x) - H(y|x,\eta) = I(y; \eta, x) \geq 0 \Rightarrow H(y|x) \geq H(y|x,\eta)$. And $\epsilon \geq 0$ follows from equation proved above: $I(z;y|\eta) \geq I(z;y) = I(x;y)$. That's why $H(y|x) \geq 0$, because it's a valid upper bound.}
+\shortintertext{Since $\varepsilon \geq 0$ (and $H(y|x) \geq 0$, since $y$ is discrete):}
 &\leq H(y|x)
 \end{align*}
 
@@ -391,7 +404,7 @@ By definition of $\varepsilon$:
 What does it give us? Does it give us invariance and disentanglement?
 We see that
 \[
-I(z;\eta) \approx \underbrace{I(z;x)}_{\text{sufficiency}} - \underbrace{I(z;y)}_\text{minimality}
+I(z;\eta) \approx \underbrace{I(z;x)}_{\text{minimality}} - \underbrace{I(z;y)}_\text{sufficiency}
 \]
 First of all, we see, that as more minimal our $z$ the more invariant it is, because minimal sufficient statistic implies that $I(x;z)$ is the most minimal possible!
 And the first term is the only term we can influence with our $z$.
@@ -412,7 +425,7 @@ This is true by theorem proved above.
 \end{proof}
 
 Introducing bottlenecks by adding noise or reducing dimensionality.
-TODO: shouldn't we prove that bottlenecks reduces MI?
+%TODO: show that prove that bottlenecks reduces MI?
 \begin{corollary}
 Imagine we have a Markov chain $(y,\eta) \to x \to z_1 \to z_2$ and $I(z_1;z_2) < I(x; z_1)$, i.e. there is some bottleneck on the road between $z_1 \to z_2$. Then if $z_2$ is sufficient, it is more invariant    
 \end{corollary}
@@ -438,17 +451,17 @@ I(z_2; \eta) \leq I(z_2; z_1) - I(x;y) < I(z_1; x) - I(x;y) = I(z_1; \eta) + \va
 Since $y$ is a deterministic function of $x$ then $\varepsilon = 0$, hence the desired result.
 \end{proof}
 
+By the way, we can show right away, just by DPI, that:
 \begin{corollary}[Stacking increases invariance]
 Consider we a have a Markov chain of layers
 \[
 (y,\eta) \to x \to z_1 \to ... \to z_l
 \]
-If $z_L$ is still sufficient, then it's more invariant.
+If $z_L$ is still sufficient, then it's more invariant (well, actually it just have a bound, which is not worse).
 \end{corollary}
 
-TODO:
-Well, this is because we have a Markov chain $\eta \to ... \to z_l$, it's not a corollary:
-$I(\eta; z_l) \leq I(\eta; z_i)$.
+%Well, this is because we have a Markov chain $\eta \to ... \to z_l$, it's not a corollary:
+%$I(\eta; z_l) \leq I(\eta; z_i)$.
 
 \section{Information in the weights}
 \subsection*{Information decomposition}
@@ -509,7 +522,7 @@ Why do we call the terms so?
     \item $H(Y|X,\theta)$ --- intrinsic error: just some constant, which does not depend on $w$. This is the error we would get if we would know true data distribution.
     \item $I(\theta; Y | X,w)$ --- sufficiency: how much information does $w$ know about $\theta$ when it sees a dataset. Why is it so? Remember the definition of sufficiency that we had: $P(A|B,\psi) = P(A|B)$ which is equivalent to $I(A : \psi |B ) = H(A | B) - H(A | B, \psi) = 0$. Let's apply this to $p(Y|\theta, w, X)$. We want to measure $I(Y:\theta | w, X) = H(Y | w, X) - H(Y | \theta, w, X)$. If it is low, then we have $p(Y | \theta, w, X) \approx p(Y | w, X)$, i.e. $\theta$ is very well captured by $w$, i.e. $w$ is a sufficient statistic for $\theta$ of $Y$ (we assume, that we always know $X$). Besides, there is an often assumption about $p(X,\theta) = p(X)p(\theta)$, i.e. features $X$ are generated independently.
     \item $\expect[X,w]{\kl{p(Y|X,w)}{q(Y|X,w)}}$ --- efficiency: how efficient is it to use neural networks of the kind $f_w$ to approximate true data distribution. It shows how close our approximation $q(Y|X,w)$ is to a true $p(Y|X,w)$ data distribution, obtained from model \eqref{eq:model-def}.
-    \item $I(Y,w|X,\theta)$ --- overfitting: shows, how much uninformative information does $w$ memorizes about $y$. Why it shows only uninformative information? Because in this term we assume that both $\theta$ and $X$ are known. So, imagine, that we know $\theta$ and $X$ --- this means, that we know everything good we can about $p(Y|X,\theta)$. But the weights $w$ are trying to memorize something more.
+    \item $I(Y,w|X,\theta) = H(Y|X,\theta) - H(Y|w,X,\theta)$ --- overfitting: shows, how much uninformative information does $w$ memorizes about $Y$. Why it shows only uninformative information? Because in this term we assume that both $\theta$ and $X$ are known. So, imagine, that we know $\theta$ and $X$ --- this means, that we know everything good we can about $p(Y|X,\theta)$. But the weights $w$ are trying to memorize something more.
 \end{enumerate}
 
 So we see that NN can potentially solve the task (obtain good values of loss) just by maximizing overfitting term, i.e. memorizing the dataset.
@@ -536,7 +549,7 @@ I(w; D) &= \expect[D]{\kl{p_\phi(w|D)}{p_\phi(w)}}
 
 Here $p(w)$ is any distribution on the weights.
 We would like to take factorized distribution, so it's easier to compute: $p(w) = \prod p(w_i)$.
-Ideally we would like to take factorized marginal $\prod p_\phi(w_i)$, because it's closest factorized distribution (TODO: prove it).
+Ideally we would like to take factorized marginal $\prod p_\phi(w_i)$, because it's closest factorized distribution (see homework).
 We could approximate this distribution by training model several times, but it's also costly and we just choose a (somewhat arbitrary) prior.
 So, for some factorized prior $p(w) = \prod p(w_i)$ we have a loss
 \[
@@ -614,7 +627,7 @@ To prove the claim they do the following experiments:
     \item If $Y$ is completely random, then $I(w;Y|X,\theta) = I(Y;w) \leq I(w;D)$. The first equality works because $H(Y|w,X,\theta) = H(Y|w)$. Remember our loss decomposition. When $\beta = 1$ we just cancel the overfitting term. When $\beta < 1$ it's always beneficial to overfit. When $\beta > 1$ it's beneficial to learn the true data. Their empirical results suggests that this really works in practice (even when we use upper bounding and a lot of assumptions).
 \end{enumerate}
 
-Authors got the following plots
+Authors got the following plots (second plot is for $\beta = 0.1$):
 
 \begin{figure}[H]
 \centering
@@ -681,18 +694,17 @@ First of all, since $\Sigma_x$ is diagonal we have
 \]
 
 Now we can see, that
-\begin{equation}
-\begin{split}
+\begin{align*}
 I(z;x)
 &= -\frac{1}{2}\expect[x]{\log \frac{\tilde \alpha \langle \hat w^2, x^2 \rangle }{\langle \hat w, \Sigma_x \hat w \rangle + \tilde \alpha \langle \hat w^2, \expect{x^2} \rangle}}
 \\
+\shortintertext{(making denominator larger by using inequality above and noting that the sign is negative):}
 &\leq -\frac{1}{2}\expect[x]{\log \frac{\tilde \alpha \langle \hat w^2, x^2 \rangle }{(1 + \tilde \alpha) \langle \hat w^2, \expect{x^2} \rangle}}
 \\
 &= \frac{1}{2}\log(1 + \frac{1}{\tilde\alpha}) - \frac{1}{2}\expect[x]{\log \frac{\langle \hat w^2, x^2 \rangle }{\langle \hat w^2, \expect{x^2} \rangle}}
 \\
 &= \frac{1}{2}\log(1 + \frac{1}{\tilde\alpha}) - \frac{1}{2}\expect[x]{\log \left(1 + \frac{\langle \hat w^2, (x^2 - \expect{x^2}) \rangle }{\langle \hat w^2, \expect{x^2} \rangle}\right)}
-\end{split}
-\end{equation}
+\end{align*}
 
 Now we want to prove that the second term (expectation) is very small.
 For this we'll use Taylor series expansion.
@@ -754,7 +766,7 @@ By DPI we have
 \[
 I(z_L;x) \leq \min_{k < L} I(z_{k+1}, z_k)
 \]
-Besides, applying deterministic function can only decrease the information, so
+Besides, applying deterministic function can only decrease the information (since $H(y|x) = H(y|x, f(x)) \leq H(y | f(x))$), so
 \[
 I(z_{k+1}; z_k) \leq I(\psi(W^k z_k); z_k) \leq I(W^k z_k; z_k) \leq g(\alpha^k) + c
 \]
@@ -764,6 +776,7 @@ I(z_{k+1}; z_k) \leq I(\psi(W^k z_k); z_k) \leq I(W^k z_k; z_k) \leq g(\alpha^k)
 \begin{theorem}[Disentanglement for autoencoders \cite{Image_content_transfer_and_disentanglement}]
 Let use have an autoencoder $h(x) = d \circ e(x)$.
 \end{theorem}
+TBD.
 
 \subsection*{Flat minima}
 \begin{theorem}
@@ -812,25 +825,5 @@ Symmetric distributions (with finite third moment) have skeweness of 0.
 
 \section{Bibliography}
 \printbibliography
-
-\section*{Exercises}
-\begin{enumerate}
-%    \item Prove that
-%\[
-%\arg \min_{q(y)} \kl{p(x,y)}{p(x)q(y)} = f(y) \Longleftrightarrow f(y) = p(y)
-%\]
-    \item Prove that
-\[
-\arg \min_{q_1(x_1) , ... , q_n(x_n)} \kl{p(x_1, ..., x_n)}{q_1(x_1) \cdot ... \cdot q_n(x_n)} = p(x_1) \cdot ... \cdot p(x_n) \Longleftrightarrow q_1(x_1) , ... , q_n(x_n) = p(x_1), ..., p(x_n)
-\]
-%    \item We have a natural (which comes from our modeling) Markov property of $X \to Z \to Y$. Prove Markov property of $Z \to X \to Y$.
-    \item Prove that if $X, Y$ are normally distributed, then $Z$ is normally distributed too. %http://www.jmlr.org/papers/volume6/chechik05a/chechik05a.pdf
-    \item Maybe something on finding differential entropy of r.v. with infinite differential entropy. Or constructing such a variable.
-    \item Prove that $I(X;T)$ is either infinity or constant (except measure zero of weights).
-    \item Prove DPI
-    \item IB solution is a minimal sufficient statistic (based on http://www.cs.huji.ac.il/labs/learning/Papers/ibgen.pdf, theorem 5)
-    \item Prove ``generalized DPI'' from the last theorem.
-    \item Prove that applying deterministic function cannot increase the MI.
-\end{enumerate}
 
 \end{document}
