@@ -246,15 +246,67 @@ url = {http://papers.nips.cc/paper/7836-memory-replay-gans-learning-to-generate-
     \end{itemize}
 \end{frame}
 
-%\begin{frame}
-%    \frametitle{Prototypical Generative Memory}
-%    \framesubtitle{Main idea (1/2)}
-%    
-%    \begin{itemize}
-%        \item How can we force Encoder not to change output mapping for previous classes?
-%        \item We can use prototypes and make uit
-%    \end{itemize}
-%\end{frame}
+\begin{frame}
+    \frametitle{Latent Space Alignment}
+    \framesubtitle{Main idea (1/2)}
+    
+    \begin{itemize}
+        \item It's not about generative memory (but can be useful)
+        \item Imagine our classifier is $h(f(x))$, where $f(x)$ is an embedder and $h(z)$ is a head
+        \item We work in multi-headed setup, i.e. we have a separate head $h_t(z)$ for each task $t$
+        \item In this setup forgetting occurs when embedder $f(x)$ changes
+        \item Imagine that head $h_{t-1}(z)$ was operating in embedding space $Z_{t-1}$, but task $t$ changed it and $h_t(z)$ operates in $Z_t$
+        \item Let's train a ``bridge'' function $g_{t \to t-1}:Z_t \to Z_{t-1}$ which will convert $Z_t$ to $Z_{t-1}$
+        \item Having good bridges between all the latent spaces $Z_T \to Z_{T-1} \to ... \to Z_2 \to Z_1$ we'll be able to compute predictions with embedding $f_T(x)$ without forgetting
+        \item An interesting consequence is that we can train 10 models on 10 tasks in parallel and then just align their latent spaces
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Latent Space Alignment}
+    \framesubtitle{Illustration (2/2)}
+    
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/latent-space-alignment.png}
+    
+    \begin{itemize}
+        \item After we have trained a bridge $g_{t \to t-1}$ we can discard $f_{t-1}$ since we can always compute original predictions by $h_{t-1}(g_{t \to t-1}(f_t(x)))$
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Online Generative Memory}
+    
+    Main idea:
+    \begin{itemize}
+        \item Idea is to keep model not to change its previous predictions
+        \item Maybe we can adapt it to LwF scenario (but LwF does not work well even as it is)
+    \end{itemize}
+    
+    Three ideas on how to achieve this
+    \begin{itemize}
+        \item MAML-like way:
+        \begin{enumerate}
+            \item Perform $k$ steps in $\nabla \| f_{\theta} (x_k) - f_{\theta - \nabla L(\theta)}(x_k) \|_2^2$ direction
+            \item Safely perform step in $\nabla L(\theta)$ direction.
+        \end{enumerate}
+        \item Teacher distillation with previous batch after the current update
+        \begin{enumerate}
+            \item Generate and save a batch of examples
+            \item Perform gradient step for the main loss
+            \item Perform teacher distillation step with the saved batch
+            \item Repeat
+        \end{enumerate}
+        \item Project GD step onto $\| f(x) - y \| \leq \varepsilon$ space (wrt spectral or frobenius norm)
+        \begin{enumerate}
+            \item Generate and save a batch of examples $X$
+            \item Compute a gradient for the main loss
+            \item Project the gradient onto $f(x) = y$ loss by projecting the gradient for each layer
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
 
 
 
