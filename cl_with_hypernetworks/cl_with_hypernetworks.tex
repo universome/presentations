@@ -61,19 +61,19 @@ url = {http://papers.nips.cc/paper/7836-memory-replay-gans-learning-to-generate-
 %\usetheme{lucid}
 \begin{document}
 
-%\begin{frame}
-%    \titlepage
-%\end{frame}
+\begin{frame}
+    \titlepage
+\end{frame}
 
 \section{Model description}
 \begin{frame}
     \frametitle{Model description}
     
     \begin{itemize}
-        \item A hypernetwork (meta-model) is just a model which produces the weights for some other model.
-        \item What is an input to a meta-model? Task input data, task embeddings, random noise, etc.
-        \item A meta-model can have less parameters than a target model!
-        \item A good way to reduce number of parameters for a meta-model is to condition it on a layer embedding.
+        \item\pause A hypernetwork (meta-model) is just a model which produces the weights for some other model.
+        \item\pause What is an input to a meta-model? Task input data, task embeddings, random noise, etc.
+        \item\pause A meta-model can have less parameters than a target model!
+        \item\pause A good way to reduce number of parameters for a meta-model is to condition it on a layer embedding.
     \end{itemize}
     
     \begin{figure}
@@ -87,20 +87,20 @@ url = {http://papers.nips.cc/paper/7836-memory-replay-gans-learning-to-generate-
     \frametitle{How to use hypernetworks not to forget previous tasks}
     
     \begin{itemize}
-        \item Condition a hypernetwork on task embedding $e_t$.
-        \item Add a regularization term that ensures that its outputs on previously learned task embeddings do not change:
+        \item\pause Condition a hypernetwork on task embedding $e_t$.
+        \item\pause Add a regularization term that ensures that its outputs on previously learned task embeddings do not change:
     \end{itemize}
     
     \begin{equation*}
-        \mathcal{L}(\theta) = \mathcal{L}^s_\text{cls}(\theta) + \beta \sum_{t=1}^T \| h(\theta_\text{old}, e_t) - h(\theta + \Delta \theta, e_t) \|_2^2,
+        \mathcal{L}(\theta) = \mathcal{L}^T_\text{cls}(\theta) + \beta \sum_{t=1}^{T-1} \| h(\theta_\text{old}, e_t) - h(\theta + \Delta \theta, e_t) \|_2^2,
     \end{equation*}
     where:
     \begin{itemize}
-        \item $\mathcal{L}_\text{cls}$ is our classification loss at the current task $t = s$;
-        \item $h$ is our hypernetwork;
-        \item $\theta$ is the current parameter vector of $h$;
-        \item $\Delta \theta$ is the change in parameters produced by Adam optimizer to minimize $\mathcal{L}_\text{cls}$.
-        \item $\theta_\text{old}$ --- parameters snapshot before starting to learn the current task.
+        \item\pause $\mathcal{L}_\text{cls}$ is our classification loss at the current task $t = T$;
+        \item\pause $h$ is our hypernetwork;
+        \item\pause $\theta$ is the current parameter vector of $h$;
+        \item\pause $\Delta \theta$ is the change in parameters produced by Adam optimizer to minimize $\mathcal{L}_\text{cls}$.
+        \item\pause $\theta_\text{old}$ --- parameters snapshot before starting to learn the current task.
     \end{itemize}
 \end{frame}
 
@@ -110,16 +110,16 @@ url = {http://papers.nips.cc/paper/7836-memory-replay-gans-learning-to-generate-
     Authors consider 3 different scenarios for continual learning:
     
     \begin{itemize}
-        \item With knowing task identities;
-        \item Without knowing task identities with a multi-headed model;
-        \item Without knowing task identities with a single-headed model.
+        \item\pause With knowing task identities;
+        \item\pause Without knowing task identities with a multi-headed model;
+        \item\pause Without knowing task identities with a single-headed model.
     \end{itemize}
     
     And they propose two ways to infer a task identity:
     \begin{itemize}
-        \item Check which task embedding gives the lowest entropy;
-        \item Train a generative memory model and be ready to classify without task identity (in a multi-headed variant);
-        \item Train a generative memory and a model that predicts task identity by an input (in a single-headed variant).
+        \item\pause Check which task embedding gives the lowest entropy;
+        \item\pause Train a generative memory model and be ready to classify without task identity (in a multi-headed variant);
+        \item\pause Train a generative memory and a model that predicts task identity by an input (in a single-headed variant).
     \end{itemize}
 \end{frame}
 
@@ -127,10 +127,10 @@ url = {http://papers.nips.cc/paper/7836-memory-replay-gans-learning-to-generate-
 \begin{frame}
     \frametitle{Details, results and discussion}
     \begin{itemize}
-        \item Learned task embeddings tend to have a good performance for all the previous tasks as well.
-        \item Authors use a VAE model for their generative memory model (people usually use GANs).
-        \item They compare the approach to EWC, SI and DGR (these are from 2017), beat them and claim SotA.
-        \item A drawback of the approach is the necessity to recompute parameters for all the previous target models on each iteration.
+        \item\pause Learned task embeddings tend to have a good performance for all the previous tasks as well.
+        \item\pause Authors use a VAE model for their generative memory model (people usually use GANs).
+        \item\pause They compare the approach to EWC, SI and DGR (these are from 2017), beat them and claim SotA.
+        \item\pause A drawback of the approach is the necessity to recompute parameters for all the previous target models on each iteration.
     \end{itemize}
 \end{frame}
 
