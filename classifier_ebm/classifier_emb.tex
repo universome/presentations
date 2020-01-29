@@ -1,0 +1,148 @@
+\documentclass[10pt]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage{biblatex}
+\input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+
+\title{Your Classifier is Secretly an Energy Based Model and You Should Treat it Like One}
+%\subtitle{}
+%\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \frametitle{What is an Energy Based Model (EBM)?}
+\pause
+Any pdf $p_\theta(x)$ can be written down as:
+    
+    \begin{equation}
+p_{\theta}(\mathbf{x})=\frac{\exp \left(-E_{\theta}(\mathbf{x})\right)}{Z_\theta}
+\end{equation}
+\pause
+where $Z_\theta$ is a normalizing constant:
+\begin{equation*}
+Z_\theta = \int_{\bm x} \exp{(-E_\theta(\bm x))}d\bm x
+\end{equation*}
+
+\begin{itemize}
+    \item\pause This parametrization allows us to forget about $p_\theta(x)$ and work with $E_\theta(x)$
+    \item\pause Function $E_\theta(x)$ is an \textit{energy function} (hence the name --- EBM)
+    \item\pause Energy functions are \textit{easier} to work with: you do not have any restrictions on $E_\theta(x)$ ($p_\theta(x)$ is nonnegative and integrates to 1).
+    \item\pause Energy functions are \textit{harder} to work with: $Z_\theta$ is hard or impossible to compute, so we can't optimize EBM for $\theta$
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{How to train EBMs}
+    
+    \begin{itemize}
+        \item\pause We perform standard MLE: maximize $\log p_\theta(x_i)$ at our points $x_i$.
+        \item\pause By optimizing $\log p_\theta(x)$ we also optimize $E_\theta(x)$.
+        \item\pause We can't compute $\log p_\theta(x)$, but we can (approximately) compute its log-derivative via:
+\begin{equation}
+\frac{\partial \log p_{\theta}(\mathbf{x})}{\partial \theta}=\mathbb{E}_{p_{\theta}\left(\mathbf{x}^{\prime}\right)}\left[\frac{\partial E_{\theta}\left(\mathbf{x}^{\prime}\right)}{\partial \theta}\right]-\frac{\partial E_{\theta}(\mathbf{x})}{\partial \theta}
+\end{equation}
+        \item\pause Proof: follows directly from the definition.
+        \item\pause But a new problem arises: how to compute expectation?
+        \item\pause Answer: we can't do that directly, so let's use SGLD sampling.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}    
+    \frametitle{Stochastic Gradient Langevin Dynamics (SGLD)}
+    Motivation:
+    \begin{itemize}
+        \item\pause Imagine we have a ``magic'' function $p_\theta(x)$ that takes an input $x$ and tells us its density.
+        \item\pause Unfortunately, we cannot sample new $x$-s from it directly, i.e. $p_\theta(x)$ does not support such operations.
+        \item\pause But we really want to sample from it! What should we do?
+        \item\pause SGLD is a method to sample from such functions.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Stochastic Gradient Langevin Dynamics (SGLD)}
+    SGLD in short:
+    \begin{enumerate}
+        \item\pause Start from any random point $x_0$.
+        \item\pause Compute the gradient of $\nabla \log p_\theta(x_0)$.
+        \item\pause Perform a small step in that direction.
+        \item\pause Add a little bit of noise.
+        \item\pause Obtain $x_{t+1}$.
+    \end{enumerate}
+    \pause In other words, run the following recurrence a lot of times:
+\begin{equation}
+\mathbf{x}_{0} \sim p_{0}(\mathbf{x}), \quad \mathbf{x}_{i+1}=\mathbf{x}_{i}-\frac{\alpha}{2} \frac{\partial E_{\theta}\left(\mathbf{x}_{i}\right)}{\partial \mathbf{x}_{i}}+\epsilon, \quad \epsilon \sim \mathcal{N}(0, \alpha)
+\end{equation}
+
+\pause Justification: if your model and your choice of $\alpha$ are ``good'' (in some sense), then after infinite amount of steps your samples will be ``good'' (in some sense).
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Ok, how to treat a classifier as an EBM?}
+    
+    
+    \begin{itemize}
+        \item\pause Remember that \textit{any} function can be used as $E_\theta(x)$
+        \item\pause Let $f_\theta(x)$ be our neural network.
+        \item\pause Let $f_\theta(x)[y]$ be the $y$-th logit (i.e. logit value for class $y$).
+        \item\pause Let our examples be $s = (x,y)$
+        \item\pause We define energy $E_\theta(s) = E_\theta(x,y) = -f_\theta(x)[y]$.
+        \item\pause Using $E_\theta(x,y)$ we can define $p_\theta(x)$:
+        \begin{equation}
+p_{\theta}(\mathbf{x})=\sum_{y} p_{\theta}(\mathbf{x}, y)=\frac{1}{Z_\theta}\sum_{y} \exp \left(f_{\theta}(\mathbf{x})[y]\right)
+\end{equation}
+        \item\pause Using $p_\theta(x)$ we can define $E_\theta(x)$:
+        \begin{equation}
+E_{\theta}(\mathbf{x})=-\log \sum_{y} \exp \left(f_{\theta}(\mathbf{x})[y]\right)
+\end{equation}
+        \item\pause Higher the logits --- lower the energy of $x$.
+        \item\pause Our final loss looks like:
+        \begin{equation}
+            \mathcal{L}(x) = \log p(x,y) = \underbrace{\log p(y|x)}_\text{classification loss} + \underbrace{\log p(x)}_\text{generative loss}
+        \end{equation}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Results and discussion}
+    \begin{itemize}
+        \item\pause Disclaimer: results are really good.
+        \item\pause Authors built a model on SVHN/CIFAR10/CIFAR100 which:
+        \begin{itemize}
+            \item\pause has good classification accuracy
+            \item\pause has good IS/FID scores (i.e. has good samples)
+            \item\pause has much better calibrated predictions (i.e. is not overconfident unlike traditional classifiers)
+            \item\pause has good out-of-distribution predictions (i.e. detecting when we feed OOD-samples into it)
+            \item\pause is robust to adversarial attacks
+            \item\pause ...and all of these at the same time!
+        \end{itemize}
+        \item\pause A huge limitation is that because of SGLD the training is unstable and the model is hard to scale.
+        \item\pause A big limitation: we cannot compute the loss value!!!
+        \item\pause An approach was coined Joint Energy based Model (JEM) since we model $(x,y)$ simultaneously.
+    \end{itemize}
+\end{frame}
+
+\end{document}
