@@ -1,0 +1,123 @@
+\documentclass[10pt]{beamer}
+
+\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{makecell}
+\input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+%\addbibresource{style-transfer.bib}
+
+\title{Information Bottleneck}
+\subtitle{(Mostly in Deep Learning)}
+\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+
+%\begin{frame}
+%    \frametitle{Contents}
+%    \tableofcontents
+%\end{frame}
+
+
+% http://www.stat.cmu.edu/~larry/=sml/Concentration.pdf
+% https://arxiv.org/abs/1904.03743
+% https://arxiv.org/abs/1611.01353
+% https://reader.elsevier.com/reader/sd/pii/S030439751000201X?token=453A6BFDA0F0963DECE07864F11DCABCF47BD023F089FED6D9168E82AD34920E1D53855647EFB60010239012DD6B28E3
+% https://arxiv.org/abs/1612.00410
+% https://arxiv.org/abs/1711.00464
+% https://arxiv.org/abs/1705.02436
+% https://openreview.net/forum?id=SJePKo5HdV
+% https://arxiv.org/abs/1808.07593
+% https://arxiv.org/abs/1901.10799
+% https://papers.nips.cc/paper/8120-theoretical-linear-convergence-of-unfolded-ista-and-its-practical-weights-and-thresholds
+% https://openreview.net/forum?id=Bklr3j0cKX
+% https://openreview.net/forum?id=BkedwoC5t7
+% https://openreview.net/forum?id=HyxPx3R9tm
+% https://www.sciencedirect.com/science/article/pii/S0893608019301352
+% https://arxiv.org/abs/1906.04109
+% https://arxiv.org/abs/1710.05233
+% https://arxiv.org/abs/1802.09766
+% https://arxiv.org/abs/1808.07593
+% https://arxiv.org/abs/1801.04062
+% https://physics.princeton.edu/archives/theses/lib/upload/Strouse-thesis.pdf
+% http://pillowlab.princeton.edu/teaching/statneuro2018/slides/notes08_infotheory.pdf
+
+\section{Style Transfer not in Text}
+\subsection{Image Style Transfer}
+
+
+\begin{frame}
+\frametitle{Plan}
+%\framesubtitle{Overview}
+
+\begin{enumerate}
+    \item Origins and intuitive understanding
+    \item IB is not a hidden variable model (no generative assumption)
+    \item It usually assumes that joint is known
+    \item Connection to minimal sufficient statistics
+    \item Connection to VAE/variational inference in general
+    \item Trivial solution for $\beta \leq 1$.
+    \item Problems in deterministic scenario
+    \item Implicit optimization in DL: SZT experiments and Saxe's critics
+    \item Explicit optimization in DL: TODO
+    \item Why IB? --- Generalization bounds
+    \item Why IB? --- Bias-variance tradeoff
+    \item MI estimators
+\end{enumerate}
+\end{frame}
+
+\begin{frame}
+\frametitle{Origins and intuitive understanding}
+\begin{itemize}
+    \item TODO: do we always can compute $z$ from a new $x$, i.e. $W$ is always invertible?
+    \item PCA solves:
+\begin{equation*}
+\min_{W,Z} \| WZ - X\|_F
+\end{equation*}
+i.e. we try to find linear mapping $W$ and latent codes $Z$ such that $X$ is ``reconstructed well'' from $Z$.
+\item IB solves
+\begin{equation*}
+\min_{Z} I(X:Z) - \beta I(Z:Y)
+\end{equation*}
+i.e. we try to find such $Z$ that $Y$ is ``reconstructed well'' and \textit{we do not care about $X$}.
+\item Q1: Why should we care about minimizing $I(X:Z)$ if we only care about reconstructing $Y$?
+\item A1: $I(X:Z) = H(Z) - H(Z|X)$, so $H(Z)$ is minimized (a good property)
+\item Q2: But $H(Z|X)$ is maximized: why?
+\item A2: The reason is subtle, we can do well without that
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{equation*}
+\begin{split}
+\kl{p(w)}{\tilde{q}(w)} &= \int \log\frac{p(w)}{\tilde{q}(w)} p(w) dw \\
+&= \int \log\frac{p(w)}{\tilde{p}(w)} p(w) dw + \int \log\frac{\tilde p(w)}{\tilde q(w)} p(w) dw
+\\
+&= \kl{p(w)}{\tilde p(w)} + \int \sum_{i=1}^d \log \frac{\tilde p(w_i)}{\tilde q(w_i)} p(w) dw
+\\
+&= \kl{p(w)}{\tilde p(w)} + \sum_{i=1}^d \kl{\tilde p(w_i)}{\tilde q(w_i)}
+\\
+&= \kl{p(w)}{\tilde p(w)} + \kl{\tilde p(w)}{\tilde q(w)}
+\end{split}
+\end{equation*}
+\end{frame}
+
+\end{document}

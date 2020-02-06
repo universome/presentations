@@ -1,0 +1,26 @@
+\documentclass{article}
+
+\title{Information Bottleneck in Deep Learning}
+\author{Ivan Skorokhodov}
+
+\begin{document}
+
+\maketitle
+
+Today we are going to discuss information bottleneck principle and its use in Deep Learning.
+Information Bottleneck
+
+It is similar to PCA in some sense, but PCA tries to encode $X$ into $Z$ in such a way that $X$ is reconstructed well, and IB goal is to reconstruct $Y$.
+TODO: is it equivalent to PCA in case of autoencoding task, i.e. $Y = X$?
+TODO: IB is meaningless in case of autoencoding?
+
+What I wanna say:
+\begin{itemize}
+    \item IB is not a hidden variable model
+    \item It requires joint --- why then do we need to learn anything if we know the whole joint?
+    \item We can estimate it empirically and get good generalization.
+    \item Why learned representation should be useful?
+    \item Degenerate solution for $\beta \leq 1$ (because of DPI).
+\end{itemize}
+
+\end{document}
