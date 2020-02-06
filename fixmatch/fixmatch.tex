@@ -1,0 +1,136 @@
+\documentclass[10pt]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage{biblatex}
+% \input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+\begin{filecontents*}{references.bib}
+@misc{FixMatch,
+Author = {Kihyuk Sohn and David Berthelot and Chun-Liang Li and Zizhao Zhang and Nicholas Carlini and Ekin D. Cubuk and Alex Kurakin and Han Zhang and Colin Raffel},
+Title = {FixMatch: Simplifying Semi-Supervised Learning with Consistency and Confidence},
+Year = {2020},
+Eprint = {arXiv:2001.07685},
+}
+\end{filecontents*}
+
+\addbibresource{references.bib}
+
+
+\title{FixMatch: Simplifying Semi-Supervised Learning with
+Consistency and Confidence\footnote{\citepaper{FixMatch}}}
+%\subtitle{}
+%\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Overview}
+    FixMatch:
+    \begin{itemize}
+        \item\pause is a strong Self-Supervised Learning approach
+        \item\pause has a very simple loss function which has an interesting interpretation
+        \item\pause has quite complex augmentation strategy
+        \item\pause achieves 88.61\% accuracy on CIFAR-10 with 4 labels per class!
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Notation}
+    \begin{itemize}
+        \item\pause Imagine we have two datasets of images:
+            \begin{itemize}
+                \item\pause Labeled images $X^l = \left\{\left(x_{n}^l, p_{n}\right)\right\}_{n=1}^N$
+                \item\pause Unlabeled images $X^u = \left\{x_{n}^u \right\}_{n=1}^{k \times N}$, i.e. $X^u$ is $k$ times larger than $X^l$
+                \item\pause $p_n$ is a one-hot class label
+            \end{itemize}
+        \item\pause Let $H(p, q)$ be a cross-entropy between $p$ and $q$.
+        \item\pause We also have augmentation functions:
+        \begin{itemize}
+            \item\pause $\alpha(x)$ is a weak (i.e. simple) augmentation: random horizontal flipping and translations
+            \item\pause $\mathcal{A}(x)$ is a strong (i.e. sophisticated) augmentation: color inversion, translation, contrast adjustment, etc
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{FixMatch}
+    \pause
+    FixMatch loss is a combination of two losses:
+    \begin{equation}
+        \mathcal{L}_\text{FM} = \mathcal{L}_\text{cls} + \lambda_\text{pl}\mathcal{L}_\text{pl}
+    \end{equation}
+    \begin{itemize}
+        \item\pause $\mathcal{L}_\text{cls}$ is a usual cross-entropy classification loss on $X^l$ dataset.
+        \item\pause $\mathcal{L}_\text{pl}$ is a \textit{pseudo-labeling loss}, i.e. a cross-entropy loss that uses synthetic targets produced by our model
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Pseudo-labeling loss}
+\pause
+Pseudo-labeling loss $\mathcal{L}_\text{pl}$ equals:
+
+\begin{equation}
+\mathcal{L}_\text{pl} = \frac{1}{kN} \sum_{n=1}^{kN} 1\left[\max \left(\bar{q}_n\right) \geq \tau\right] H\left(\bar{q}_{n}', p_m\left(y | \mathcal{A}\left(x_{n}\right)\right)\right)
+\end{equation}
+
+Where:
+\begin{itemize}
+    \item $\bar{q}_n = p_m(y | \alpha(x_n))$, i.e. class probabilities for weakly augmented $x_n$
+    \item $\bar{q}_n' = \arg\max \bar{q}_n$, i.e. a pseudo label (one-hot)
+    \item $\tau$ is a hyperparameter
+\end{itemize}
+
+\pause
+Algorithm:
+\begin{itemize}
+    \item\pause Pick an unlabeled image $x_n$, produce two augmentated versions: $\bar{x}_n = \alpha(x)_n$ and $\tilde{x}_n = \mathcal{A}(x_n)$
+    \item\pause Compute class probabilities $\bar{q}_n$ and $\tilde{q}_n$ for $\bar{x}_n$ and $\tilde{x}_n$
+    \item\pause Pick only examples with confident class probabilities for weakly-augmented images
+    \item\pause Cross-entropy term forces the model to give the same predictions for a weakly-augmented and a strongly-augmented images
+\end{itemize}
+\end{frame}
+
+\begin{frame}{An interesting property of this pseudo-labeling loss}
+    \begin{itemize}
+        \item\pause Previously used variants of pseudo-labelling loss required tuning of $\lambda_\text{pl}$ weight during training and gradually increase it.
+        \item\pause In FixMatch model becomes gradually more confident in new images and authors omit $\lambda_\text{pl}$ whatsoever!
+        \item\pause So we get a curriculum learning out of the box!
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Notes}
+\begin{itemize}
+    \item\pause FixMatch provides very strong scores
+    \item\pause Has a very simple loss with an interesting side-effect of curriculum learning
+    \item\pause A disadvantage: strong augmentations are based on CutOut, CTAugment, etc and seem \textit{very} sophisticated
+    \item\pause Strongly beats SotA in many setups:
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/fixmatch-results.png}
+    %\caption{FixMatch results}
+    %\label{fig:results}
+\end{figure}
+\end{frame}
+
+\end{document}
