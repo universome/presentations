@@ -13,11 +13,21 @@
 %\usecolortheme{dolphin}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+\begin{filecontents*}{references.bib}
+@inproceedings{
+classifier_ebm,
+title={Your classifier is secretly an energy based model and you should treat it like one},
+author={Will Grathwohl and Kuan-Chieh Wang and Joern-Henrik Jacobsen and David Duvenaud and Mohammad Norouzi and Kevin Swersky},
+booktitle={International Conference on Learning Representations},
+year={2020},
+url={https://openreview.net/forum?id=Hkxzx0NtDB}
+}
+\end{filecontents*}
+\addbibresource{references.bib}
 
-
-\title{Your Classifier is Secretly an Energy Based Model and You Should Treat it Like One}
+\title{Your Classifier is Secretly an Energy Based Model and You Should Treat it Like One\footnote{Will Grathwohl et al., ICLR 2020}}
 %\subtitle{}
-%\author{Ivan Skorokhodov}
+%\author{Will Grathwohl, Kuan-Chieh Wang, Joern-Henrik Jacobsen, David Duvenaud, Mohammad Norouzi, Kevin Swersky}
 %\date{}
 %\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
 
@@ -78,18 +88,22 @@ Z_\theta = \int_{\bm x} \exp{(-E_\theta(\bm x))}d\bm x
         \item\pause Unfortunately, we cannot sample new $x$-s from it directly, i.e. $p_\theta(x)$ does not support such operations.
         \item\pause But we really want to sample from it! What should we do?
         \item\pause SGLD is a method to sample from such functions.
+        \item\pause What is cool about SGLD is that it allows to use \textit{unnormalized} density $\tilde{p}(x)$ (a very important property in our case!).
     \end{itemize}
 \end{frame}
 
 \begin{frame}
     \frametitle{Stochastic Gradient Langevin Dynamics (SGLD)}
-    SGLD in short:
+    SGLD in a (very) few words:
     \begin{enumerate}
         \item\pause Start from any random point $x_0$.
         \item\pause Compute the gradient of $\nabla \log p_\theta(x_0)$.
         \item\pause Perform a small step in that direction.
         \item\pause Add a little bit of noise.
-        \item\pause Obtain $x_{t+1}$.
+        \item\pause Obtain $x_{t+1}$. Accept it if:
+        \begin{equation}
+\frac{p\left(x_{t} | x_{t+1}\right) p\left(x_{t}\right)}{p\left(x_{t+1} | x_{t}\right) p\left(x_{t+1}\right)}<u, u \sim \mathcal{U}[0,1]
+\end{equation}
     \end{enumerate}
     \pause In other words, run the following recurrence a lot of times:
 \begin{equation}
@@ -102,7 +116,6 @@ Z_\theta = \int_{\bm x} \exp{(-E_\theta(\bm x))}d\bm x
 
 \begin{frame}
     \frametitle{Ok, how to treat a classifier as an EBM?}
-    
     
     \begin{itemize}
         \item\pause Remember that \textit{any} function can be used as $E_\theta(x)$
@@ -127,6 +140,27 @@ E_{\theta}(\mathbf{x})=-\log \sum_{y} \exp \left(f_{\theta}(\mathbf{x})[y]\right
 \end{frame}
 
 \begin{frame}
+    \frametitle{Is JEM using adversarial training?!}
+    \begin{itemize}
+        \item\pause Let's take a closer look to the gradient of the part of the loss:
+\begin{equation}
+\frac{\partial \log p_{\theta}(\mathbf{x})}{\partial \theta}=\mathbb{E}_{p_{\theta}\left(\mathbf{x}^{\prime}\right)}\left[\frac{\partial E_{\theta}\left(\mathbf{x}^{\prime}\right)}{\partial \theta}\right]-\frac{\partial E_{\theta}(\mathbf{x})}{\partial \theta}
+\end{equation}
+    \item\pause If we use a single sample to approximate expectation and compute the gradient across the dataset our gradient we'll look like:
+\begin{equation}
+\frac{\partial \log p_{\theta}(\mathbf{X})}{\partial \theta} \approx \frac{1}{n}\sum_{i=1}^n\left(\frac{\partial E_{\theta}\left(\mathbf{x}^\text{fake}\right)}{\partial \theta}-\frac{\partial E_{\theta}(\mathbf{x}^\text{real})}{\partial \theta}\right)
+\end{equation}
+    \item\pause And this gradient looks very similar to the gradient of the following loss:
+    \begin{equation}
+        \mathcal{L}(\theta) = \expect[p_\theta(x)]{E_\theta(x)} - \expect[p_\text{data}(x)]{E_\theta(x)}
+    \end{equation}
+    \item\pause Which is a discriminator loss!
+    \item\pause Reformulation of GANs via EBMs is not new.
+    \item\pause The key novelty of the paper is that we can do that ``inside'' the classifier.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
     \frametitle{Results and discussion}
     \begin{itemize}
         \item\pause Disclaimer: results are really good.
@@ -139,8 +173,8 @@ E_{\theta}(\mathbf{x})=-\log \sum_{y} \exp \left(f_{\theta}(\mathbf{x})[y]\right
             \item\pause is robust to adversarial attacks
             \item\pause ...and all of these at the same time!
         \end{itemize}
-        \item\pause A huge limitation is that because of SGLD the training is unstable and the model is hard to scale.
-        \item\pause A big limitation: we cannot compute the loss value!!!
+        \item\pause A huge limitation: SGLD makes both the training unstable and the model hard to scale.
+        %\item\pause A big limitation: we cannot compute the loss value!!!
         \item\pause An approach was coined Joint Energy based Model (JEM) since we model $(x,y)$ simultaneously.
     \end{itemize}
 \end{frame}
