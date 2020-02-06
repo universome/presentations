@@ -102,7 +102,7 @@ Where:
 \pause
 Algorithm:
 \begin{itemize}
-    \item\pause Pick an unlabeled image $x_n$, produce two augmentated versions: $\bar{x}_n = \alpha(x)_n$ and $\tilde{x}_n = \mathcal{A}(x_n)$
+    \item\pause Pick an unlabeled image $x_n$, produce two augmentated versions: $\bar{x}_n = \alpha(x_n)$ and $\tilde{x}_n = \mathcal{A}(x_n)$
     \item\pause Compute class probabilities $\bar{q}_n$ and $\tilde{q}_n$ for $\bar{x}_n$ and $\tilde{x}_n$
     \item\pause Pick only examples with confident class probabilities for weakly-augmented images
     \item\pause Cross-entropy term forces the model to give the same predictions for a weakly-augmented and a strongly-augmented images
