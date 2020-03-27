@@ -1,0 +1,257 @@
+\documentclass[10pt]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage[doi=false,isbn=false,url=false,eprint=false]{biblatex}
+% \input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+\begin{filecontents*}{references.bib}
+@incollection{DGR,
+title = {Continual Learning with Deep Generative Replay},
+author = {Shin, Hanul and Lee, Jung Kwon and Kim, Jaehong and Kim, Jiwon},
+booktitle = {Advances in Neural Information Processing Systems 30},
+editor = {I. Guyon and U. V. Luxburg and S. Bengio and H. Wallach and R. Fergus and S. Vishwanathan and R. Garnett},
+pages = {2990--2999},
+year = {2017},
+publisher = {Curran Associates, Inc.},
+url = {http://papers.nips.cc/paper/6892-continual-learning-with-deep-generative-replay.pdf}
+}
+@incollection{MeRGAN,
+title = {Memory Replay GANs: Learning to Generate New Categories without Forgetting},
+author = {Wu, Chenshen and Herranz, Luis and Liu, Xialei and wang, yaxing and van de Weijer, Joost and Raducanu, Bogdan},
+booktitle = {Advances in Neural Information Processing Systems 31},
+pages = {5962--5972},
+year = {2018},
+publisher = {Curran Associates, Inc.},
+url = {http://papers.nips.cc/paper/7836-memory-replay-gans-learning-to-generate-new-categories-without-forgetting.pdf}
+}
+@article{PathNet,
+  author    = {Chrisantha Fernando and
+               Dylan Banarse and
+               Charles Blundell and
+               Yori Zwols and
+               David Ha and
+               Andrei A. Rusu and
+               Alexander Pritzel and
+               Daan Wierstra},
+  title     = {PathNet: Evolution Channels Gradient Descent in Super Neural Networks},
+  journal   = {CoRR},
+  volume    = {abs/1701.08734},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1701.08734},
+  archivePrefix = {arXiv},
+  eprint    = {1701.08734},
+  timestamp = {Mon, 13 Aug 2018 16:49:06 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/FernandoBBZHRPW17},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@article {EWC,
+	author = {Kirkpatrick, James and Pascanu, Razvan and Rabinowitz, Neil and Veness, Joel and Desjardins, Guillaume and Rusu, Andrei A. and Milan, Kieran and Quan, John and Ramalho, Tiago and Grabska-Barwinska, Agnieszka and Hassabis, Demis and Clopath, Claudia and Kumaran, Dharshan and Hadsell, Raia},
+	title = {Overcoming catastrophic forgetting in neural networks},
+	volume = {114},
+	number = {13},
+	pages = {3521--3526},
+	year = {2017},
+	doi = {10.1073/pnas.1611835114},
+	publisher = {National Academy of Sciences},
+	issn = {0027-8424},
+	URL = {https://www.pnas.org/content/114/13/3521},
+	eprint = {https://www.pnas.org/content/114/13/3521.full.pdf},
+	journal = {Proceedings of the National Academy of Sciences}
+}
+@article{MAS,
+  author    = {Rahaf Aljundi and
+               Francesca Babiloni and
+               Mohamed Elhoseiny and
+               Marcus Rohrbach and
+               Tinne Tuytelaars},
+  title     = {Memory Aware Synapses: Learning what (not) to forget},
+  journal   = {CoRR},
+  volume    = {abs/1711.09601},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1711.09601},
+  archivePrefix = {arXiv},
+  eprint    = {1711.09601},
+  timestamp = {Mon, 13 Aug 2018 16:47:14 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1711-09601},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@inproceedings{A-GEM,
+title={Efficient Lifelong Learning with A-{GEM}},
+author={Arslan Chaudhry and Marc’Aurelio Ranzato and Marcus Rohrbach and Mohamed Elhoseiny},
+booktitle={International Conference on Learning Representations},
+year={2019},
+url={https://openreview.net/forum?id=Hkf2_sC5FX},
+}
+@InProceedings{HAT,
+  title = 	 {Overcoming Catastrophic Forgetting with Hard Attention to the Task},
+  author = 	 {Serra, Joan and Suris, Didac and Miron, Marius and Karatzoglou, Alexandros},
+  booktitle = 	 {ICML},
+  pages = 	 {4548--4557},
+  year = 	 {2018},
+  volume = 	 {80},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {10--15 Jul},
+  publisher = 	 {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v80/serra18a/serra18a.pdf},
+  url = 	 {http://proceedings.mlr.press/v80/serra18a.html},
+}
+@InProceedings{GAZSL,
+author = {Zhu, Yizhe and Elhoseiny, Mohamed and Liu, Bingchen and Peng, Xi and Elgammal, Ahmed},
+title = {A Generative Adversarial Approach for Zero-Shot Learning From Noisy Texts},
+booktitle = {CVPR},
+month = {June},
+year = {2018}
+}
+\end{filecontents*}
+
+\AtBeginBibliography{\small}
+\addbibresource{references.bib}
+
+
+\title{Continual Zero-Shot Learning}
+%\subtitle{}
+\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{What is Continual Learning?}
+    \begin{itemize}
+        \item\pause Modern neural networks are prone to \textit{catastrophic forgetting}: they forget previous tasks while are learning new ones.
+        \item\pause Continual Learning tries to find ways to make model learn skills one by one in such a way that we do not forget previous skills
+        \begin{itemize}
+            \item\pause Example 1: a robot that travels the world and learn new skills. We want it not to forget previous skills while he is acquiring new ones.
+            \item\pause Example 2: a classification model is learning datasets one by one: we do not want its performance on previously learned datasets to decrease.
+        \end{itemize}
+    \end{itemize}
+%    All of them has the loss in the form:
+%    \[
+%    \mathcal{L(\theta)} = L_\text{current task} + L_\text{forgetting}
+%    \]
+%    
+%    But what if we'll try to improve the performance on future tasks?
+%    \[
+%    \mathcal{L(\theta)} = L_\text{current task} + L_\text{forgetting} + L_\text{future transfer}
+%    \]
+\end{frame}
+
+\begin{frame}{Modern Continual Learning techniques}
+    \pause Modern CL techniques can be divided into three groups:
+    \begin{itemize}
+        \item\pause Regularization-based (\cite{EWC}, \cite{MAS}, etc): detect the weights which are important for previous tasks and do not change them much in the future.
+        \item\pause Rehearsal-based (\cite{A-GEM}, \cite{MeRGAN}, etc): store a part of previous data to replay it in the future. 
+        \item\pause Component-based (\cite{HAT}, \cite{PathNet}, etc): divide your network into components, and let future tasks not to break components which are important for previous tasks.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{What is Zero-Shot Learning (ZSL)?}
+What data do we have:
+    \begin{itemize}
+        \item\pause We will consider classification tasks from now on...
+        \item\pause For each class $c \in \mathcal{C}$ we are given an \textit{attribute vector} $a_c \in \mathcal{A}$ which describes the class:
+            \begin{itemize}
+                \item\pause Imagine that we are classifying birds
+                \item\pause Then for each bird $a_c$ includes bird's characteristics: color of a tail, body size, length of a beak, etc
+            \end{itemize}
+        \item\pause All classes are divided into \textit{seen} and \textit{unseen}:
+            \begin{itemize}
+                \item\pause Seen dataset: $D^s = \{X^{\text{s}}, Y^{\text{s}}, A^\text{s}\}$
+                \item\pause Unseen dataset: $D^u = \{X^{\text{u}}, Y^{\text{u}}, A^\text{u}\}$
+            \end{itemize}
+    
+    \item\pause During training we have an access only to seen dataset $D^s$.
+    \begin{itemize}
+        \item\pause Our goal is to learn to match images with class descriptions
+        \item\pause I.e. model learns to detect ``blue tails'', ``large heads'', ``short beaks'', etc and not only concrete bird species
+    \end{itemize}
+    \item\pause At test time we evaluate model performance on unseen dataset $D^u$
+    \item\pause Using the knowledge about how inputs and attributes correspond to each other we can detect birds that we have not seen before just based on their class description $a_c$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Modern ZSL techniques (for classification)}
+    \begin{itemize}
+        \item\pause Embedding-based: build two embedder models:
+        \begin{itemize}
+            \item\pause Model $f(x)$ to embed images
+            \item\pause Model $h(a)$ to embed attributes
+            \item\pause Compute classification logits just by computing $d(f(x), h(a_c))$ for each class $c$ (here $d$ is some distance function.
+            \item\pause I.e. we just measure distance between an image embedding and attribute embeddings
+            \item\pause Challenges: how to embed images properly, how to embed attributes properly, what distance function to use, etc
+        \end{itemize}
+        \item\pause Generative-based
+        \begin{itemize}
+            \item\pause Train a conditional generative model that will learn to generate images based on class descriptions
+            \item\pause I.e. GAN model that can generate a pigeon given description "grey feather, white head, short legs, etc"
+            \item\pause At test time generate a lot of synthetic images, then train a classifier based on this synthetic dataset
+            \item\pause Challenges: how to train a good conditional generative model?
+            \item\pause Currently performs better than embedding-based approaches
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Continual Zero-Shot Learning}
+    \begin{itemize}
+        \item\pause Project: let's use class attributes to improve the performance on future tasks (and this also should improve past performance)
+        \item\pause Why?
+            \begin{itemize}
+                \item\pause A robot should be able to understand things it has never seen before but only heard about.
+                \item\pause And it shouldn't forget previously seen objects while doing so...
+                \item\pause And the set of attribute descriptions can grow over time...
+                \item\pause In some sense, it is ``the next'' step of ZSL
+                %\item\pause It can filter out many zero-shot learning approaches as too demanding
+            \end{itemize}
+        \item\pause I.e. build a \textit{zero-shot} model that is trained in a \textit{continual learning} fashion
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{What we have already tried}
+    \begin{itemize}
+        \item\pause Attempt \#1: use some simple (but working) generative-based ZSL approach
+        \begin{itemize}
+            \item\pause Problem: generative models are hard to train in CL scenario (it is slow and they forget things fast)
+        \end{itemize}
+        \item\pause Attempt \#2: use some simple (but working) embeddings-based ZSL approach
+        \begin{itemize}
+            \item\pause Problem \#1: It was already explored in previous literature (in A-GEM paper)
+            \item\pause Problem \#2: Attributes do not have optimal ``discriminative'' power
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+%\begin{frame}{Open questions}
+%    \begin{itemize}
+%        \item If we are going to learn attributes (to increase discriminative power), how should we prevent them from forgetting?
+%        \item 
+%    \end{itemize}
+%\end{frame}
+
+\begin{frame}
+    \frametitle{References}
+    \printbibliography[heading=none]
+\end{frame}
+%\begin{frame}[noframenumbering,plain,allowframebreaks]{Literatur}
+%    \printbibliography[heading=none]
+%\end{frame}
+
+\end{document}
