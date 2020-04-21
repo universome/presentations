@@ -14,6 +14,13 @@
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
 
+\newcommand{\expect}[2][]{
+\ifthenelse{\equal{#1}{}}{
+\mathbb{E}\left[#2\right]
+}{
+\underset{#1}{\mathbb{E}}\left[#2\right]
+}}
+
 \begin{filecontents*}{references.bib}
 @incollection{DGR,
 title = {Continual Learning with Deep Generative Replay},
@@ -153,6 +160,9 @@ year = {2018}
 %    \[
 %    \mathcal{L(\theta)} = L_\text{current task} + L_\text{forgetting} + L_\text{future transfer}
 %    \]
+    \begin{figure}
+        
+    \end{figure}
 \end{frame}
 
 \begin{frame}{Modern Continual Learning techniques}
@@ -222,29 +232,148 @@ What data do we have:
                 %\item\pause It can filter out many zero-shot learning approaches as too demanding
             \end{itemize}
         \item\pause I.e. build a \textit{zero-shot} model that is trained in a \textit{continual learning} fashion
+        \item\pause Semantic guidance should help to alleviate forgetting without additional regularization and tricks
     \end{itemize}
 \end{frame}
 
-\begin{frame}{What we have already tried}
-    \begin{itemize}
-        \item\pause Attempt \#1: use some simple (but working) generative-based ZSL approach
-        \begin{itemize}
-            \item\pause Problem: generative models are hard to train in CL scenario (it is slow and they forget things fast)
-        \end{itemize}
-        \item\pause Attempt \#2: use some simple (but working) embeddings-based ZSL approach
-        \begin{itemize}
-            \item\pause Problem \#1: It was already explored in previous literature (in A-GEM paper)
-            \item\pause Problem \#2: Attributes do not have optimal ``discriminative'' power
-        \end{itemize}
-    \end{itemize}
-\end{frame}
-
-%\begin{frame}{Open questions}
+%\begin{frame}{What we have already tried}
 %    \begin{itemize}
-%        \item If we are going to learn attributes (to increase discriminative power), how should we prevent them from forgetting?
-%        \item 
+%        \item\pause Attempt \#1: use some simple (but working) generative-based ZSL approach
+%        \begin{itemize}
+%            \item\pause Problem: generative models are hard to train in CL scenario (it is slow and they forget things fast)
+%        \end{itemize}
+%        \item\pause Attempt \#2: use some simple (but working) embeddings-based ZSL approach
+%        \begin{itemize}
+%            \item\pause Problem \#1: It was already explored in previous literature (in A-GEM paper)
+%            \item\pause Problem \#2: Attributes do not have optimal ``discriminative'' power
+%        \end{itemize}
 %    \end{itemize}
 %\end{frame}
+
+\begin{frame}{Model overview}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{images/model-overview}
+    \end{figure}
+    
+    \pause The approach is similar in spirit to metric learning:
+    \begin{itemize}
+        \item\pause Image embedder produces $u = f_\theta(x)$
+        \item\pause Attribute embedder produces $v = g_\phi(a)$
+        \item\pause We want the distance $d(u,v)$ to be low for proper pairs $x,a$ and large for improper ones.
+    \end{itemize}
+%    \begin{itemize}
+%        \item We have image $X$, $K$ attributes $a_1, ..., a_K$ corresponding to $K$ classes and we want to tell to which of this attributes the image corresponds to.
+%    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Trying different attribute embedders}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/embedders}
+\end{figure}
+\end{frame}
+
+
+%\begin{frame}{Experiment: making attribute embedder 1 layer deeper}
+%    \begin{figure}
+%        \centering
+%        \includegraphics[width=\textwidth]{images/deep/unseen}
+%    \end{figure}
+%\end{frame}
+
+
+%\begin{frame}{Experiment: making attribute embedder 1 layer deeper}
+%    \begin{figure}
+%        \centering
+%        \includegraphics[width=\textwidth]{images/deep/seen}
+%    \end{figure}
+%\end{frame}
+
+
+%\begin{frame}{Experiment: making attribute embedder 1 layer deeper}
+%    \begin{figure}
+%        \centering
+%        \includegraphics[width=\textwidth]{images/deep/harmonic}
+%    \end{figure}
+%\end{frame}
+
+
+%\begin{frame}{Experiment: maybe we just overfit?}
+%    \begin{figure}
+%        \centering
+%        \includegraphics[width=\textwidth]{images/overfit/unseen}
+%    \end{figure}
+%\end{frame}
+
+
+%\begin{frame}{Experiment: maybe we just overfit?}
+%    \begin{figure}
+%        \centering
+%        \includegraphics[width=\textwidth]{images/overfit/seen}
+%    \end{figure}
+%\end{frame}
+
+
+%\begin{frame}{Experiment: GDPP}
+%    (in slack since there are 5 plots)
+%    
+%    Batch size: 200 (generate 10 prototypes per class, 20 classes in a task)
+%\end{frame}
+
+\begin{frame}{Question 1: why the 2-layer attribute embedder works worse?}
+For some reason, a 2-layer attribute embedder works (much) worse than a linear one
+\begin{itemize}
+    \item\pause It is not overfitting since train/test gap for it is even better
+    \item\pause Can it be due to a bad initialization?
+    \item\pause What could be the other reasons?
+\end{itemize}
+
+Already tried:
+\begin{itemize}
+    \item\pause Initialize the second layer very close to identity
+    \item\pause Different learning rates/momentums for attribute embedder and image embedder
+    \item\pause Normalize attributes to zero-mean and unit variance instead of just unit-norm
+    \item\pause Bernoulli/gaussian dropout
+\end{itemize}
+
+\pause
+What else to try?
+\begin{itemize}
+    \item Initializations?
+    \item Residual connections?
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Question 2: is it sensible to have a linear generator?}
+    \begin{itemize}
+        \item\pause Imagine we have a linear generator $G(z, a_k) = W \cdot \binom{z}{a_k}$ for some weight matrix $W$, class attributes $a_1, ..., a_K$ and $z \sim \mathcal{N}(0,I)$
+        \item\pause This is equivalent to: $G(z, a_k) = W \cdot \binom{z}{a_k} = W_z z + W_a a_k$, where we split the weight matrix into 2 parts: $W = [W_z, W_a]$.
+        \item\pause Imagine we solve a classification task on top of the generator by using generated prototypes:
+        \begin{itemize}
+            \item\pause I.e. prototype $p_k$ for class $k$ is computed as $p_k = \expect[z]{G(z, a_k)}$
+            \item\pause But then we have
+            \[
+p_k = \expect[z]{G(z, a_k)} = \expect[z]{W_z z + W_a a_k} = 0 + W_a a_k = W_a a_k
+            \]
+            \item\pause This means that the generator works just by adding a bit of noise to our prototypes.
+        \end{itemize}
+        \item\pause Does it mean that using a linear generator is not sensible?
+        \item If so, can we fix that without introducing new layers (since it works worse)?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Question 3: what is the simplest generative model?}
+    \begin{itemize}
+        \item\pause Our image embedder outputs feature vectors
+        \item\pause We want to fit this distribution, but based on class attributes, so to have
+        \begin{itemize}
+            \item We can't store mean/covariances of the past task since our feature extractor is changing over time
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
 
 \begin{frame}
     \frametitle{References}
