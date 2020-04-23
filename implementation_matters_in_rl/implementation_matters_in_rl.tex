@@ -1,0 +1,125 @@
+\documentclass[10pt]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage{biblatex}
+\input{../commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+\begin{filecontents*}{references.bib}
+@inproceedings{ImplementationMattersInRL,
+title={Implementation Matters in Deep RL: A Case Study on PPO and TRPO},
+author={Logan Engstrom and Andrew Ilyas and Shibani Santurkar and Dimitris Tsipras and Firdaus Janoos and Larry Rudolph and Aleksander Madry},
+booktitle={International Conference on Learning Representations},
+year={2020},
+url={https://openreview.net/forum?id=r1etN1rtPB}
+}
+\end{filecontents*}
+
+\addbibresource{references.bib}
+
+
+\title{Implementation Matters in Deep RL: A Case Study on PPO and TRPO\footnote{\citepaper{ImplementationMattersInRL}, ICLR 2020}\footnote{Summary: \href{http://tiny.cc/zh0lnz}{http://tiny.cc/zh0lnz}}}
+%\author{Ivan Skorokhodov}
+\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Overview}
+    \begin{itemize}
+        \item\pause Performance of many RL algorithms depends a lot on tricks used in implementation
+        \item\pause Authors dived into PPO and found out that it is not an exception
+        \item\pause Key observation: tricks used in PPO give more boost than PPO itself
+        \item\pause PPO+tricks works a bit better than TRPO+tricks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{A reminder: off-policy PG vs TRPO vs PPO}
+\pause
+1. \textbf{Baseline}. A common part between TRPO and PPO is the off-policy policy gradient (with importance sampling):
+
+\begin{equation}
+J_\text{PG}(\theta) = \expect[\left(s_{t}, a_{t}\right) \sim \pi]{\frac{\pi_{\theta}\left(a_{t} | s_{t}\right)}{\pi\left(a_{t} | s_{t}\right)} \hat{A}_{\pi}\left(s_{t}, a_{t}\right)}
+\end{equation}
+
+\pause
+2. \textbf{TRPO}. TRPO differs from PG by constraining the optimization step:
+\begin{equation}
+\begin{array}{cl}
+\max _{\theta} & J_\text{PG}(\theta) \\
+\text { s.t. } & D_{K L}\left(\pi_{\theta}(\cdot | s) \| \pi(\cdot | s)\right) \leq \delta
+\end{array}
+\end{equation}
+
+\pause
+3. \textbf{PPO}. PPO differs from PG by clipping the ratio inside the objective:
+\begin{equation}
+J_\text{PPO} = \expect[\left(s_{t}, a_{t}\right) \sim \pi]{\min \left(\operatorname{clip}\left(\rho_{t}, 1-\varepsilon, 1+\varepsilon\right) \hat{A}_{\pi}\left(s_{t}, a_{t}\right), \rho_{t} \hat{A}_{\pi}\left(s_{t}, a_{t}\right)\right)}
+\end{equation}
+where
+\begin{equation}
+\rho_{t}=\frac{\pi_{\theta}\left(a_{t} | s_{t}\right)}{\pi\left(a_{t} | s_{t}\right)}.
+\end{equation}
+
+\end{frame}
+
+\begin{frame}{A ton of trick in PPO paper}
+Authors looked at the PPO implementation by OpenAI and found a lot of tricks in it.
+\pause The main ones were:
+\begin{enumerate}
+    \item\pause Value function clipping (during value function fitting)
+    \item\pause Reward scaling
+    \item\pause Orthogonal init + layer scaling
+    \item\pause Learning rate annealing
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{What is the main source of a good PPO performance?}
+\pause Authors ran several experiments for PPO and TRPO with and without tricks and obtained the following results
+
+\begin{center}
+\footnotesize
+\begin{tabular}{l c c c}
+\hline & \text { WALKER2D-V2 } & \text { HOPPER-V2 } & \text { HUMANOID-V2 } \\
+\hline
+\text { PG +tricks } & 2867 & 2371 & 831 \\
+\hline
+\text { PG +PPO } & 2735 & 2142 & 674 \\
+\text { PG +TRPO } & 2791 & 2043 & 586 \\
+\hline
+\text { PG +PPO +tricks } & \textbf{3292} & \textbf{2513} & 806 \\
+\text { PG +TRPO+tricks } & 3050 & 2466 & \textbf{1030} \\
+%\hline
+%\text { PPO (original version) } & 3424 & 2316 & - \\
+\hline
+\end{tabular}
+\end{center}
+
+\pause So,
+\begin{itemize}
+    \item tricks improve the performance better than PPO or TRPO
+    \item original paper should have used tricks for TRPO as well
+\end{itemize}
+
+\end{frame}
+
+\end{document}
