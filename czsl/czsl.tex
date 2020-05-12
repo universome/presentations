@@ -1,4 +1,4 @@
-\documentclass[10pt]{beamer}
+\documentclass[handout, 10pt]{beamer}
 
 %\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
 \usepackage{bm}
@@ -250,7 +250,7 @@ What data do we have:
 %    \end{itemize}
 %\end{frame}
 
-\begin{frame}{Model overview}
+\begin{frame}{Baseline model}
     \begin{figure}
         \centering
         \includegraphics[width=\textwidth]{images/model-overview}
@@ -268,110 +268,104 @@ What data do we have:
 \end{frame}
 
 
-\begin{frame}{Trying different attribute embedders}
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{images/embedders}
-\end{figure}
+\begin{frame}{``Improved'' model}
+Let's look closer at logits:
+
+\begin{enumerate}
+    \item\pause We compute $c$-th logit as $y_c = u^\top v_c$
+    \item\pause (1) is very similar to $y_c = u^\top V_c u$ for diagonal matrix $V_c$ with $\text{diag}(V_c) = v_c$.
+    \item\pause (2) is a special case of $(u - \mu_c)^\top V_c (u - \mu_c)$ (Maholonobis distance squared)
+    \item\pause (3) is a part of gaussian log-density $\mathcal{N}(u|\mu_c, \Sigma_c)$
+\end{enumerate}
 \end{frame}
 
 
-%\begin{frame}{Experiment: making attribute embedder 1 layer deeper}
-%    \begin{figure}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/deep/unseen}
-%    \end{figure}
-%\end{frame}
-
-
-%\begin{frame}{Experiment: making attribute embedder 1 layer deeper}
-%    \begin{figure}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/deep/seen}
-%    \end{figure}
-%\end{frame}
-
-
-%\begin{frame}{Experiment: making attribute embedder 1 layer deeper}
-%    \begin{figure}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/deep/harmonic}
-%    \end{figure}
-%\end{frame}
-
-
-%\begin{frame}{Experiment: maybe we just overfit?}
-%    \begin{figure}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/overfit/unseen}
-%    \end{figure}
-%\end{frame}
-
-
-%\begin{frame}{Experiment: maybe we just overfit?}
-%    \begin{figure}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/overfit/seen}
-%    \end{figure}
-%\end{frame}
-
-
-%\begin{frame}{Experiment: GDPP}
-%    (in slack since there are 5 plots)
-%    
-%    Batch size: 200 (generate 10 prototypes per class, 20 classes in a task)
-%\end{frame}
-
-\begin{frame}{Question 1: why the 2-layer attribute embedder works worse?}
-For some reason, a 2-layer attribute embedder works (much) worse than a linear one
+\begin{frame}{Building a generative model}
 \begin{itemize}
-    \item\pause It is not overfitting since train/test gap for it is even better
-    \item\pause Can it be due to a bad initialization?
-    \item\pause What could be the other reasons?
+    \item\pause So, let's define a generative model $p(u)$ as a GMM:
+    \[
+    p(u) = \sum_c \alpha_c \cdot \mathcal{N}(u | \mu_c, \Sigma_c)
+    \]
+    \item\pause Since our classes are balanced, we have $\alpha_c = P(y=c) = \frac{1}{K}$
+    \item\pause Then, we can obtain $P(y_c | u)$ as:
+    \[
+    P(y_c | u) = \frac{p(u | y_c) P(y_c)}{p(u)} = \frac{\mathcal{N}(u | \mu_c, \Sigma_c) \cdot \frac{1}{K}}{\sum_c \frac{1}{K} \mathcal{N}(u | \mu_c, \Sigma_c)} = \frac{\mathcal{N}(u | \mu_c, \Sigma_c)}{\sum_c \mathcal{N}(u | \mu_c, \Sigma_c)}
+    \]
+    \item\pause This gives us a way to do log-likelihood maximization for $P(y_c|u)$
+    \item\pause The only change is that we now compute logits as $\log \mathcal{N}(u | \mu_c, \Sigma_c)$:
+    \[
+    \log p(u|y_c) = \log \left[(2 \pi)^{-\frac{k}{2}} \operatorname{det}(\Sigma_c)^{-\frac{1}{2}} e^{-\frac{1}{2}(\mathbf{x}-\boldsymbol{\mu}_c)^{\top} \Sigma_c^{-1}(\mathbf{x}-\boldsymbol{\mu}_c)}\right]
+    \]
 \end{itemize}
+\end{frame}
 
-Already tried:
+
+\begin{frame}{How to compute $\mu_c$ and $\Sigma_c$?}
 \begin{itemize}
-    \item\pause Initialize the second layer very close to identity
-    \item\pause Different learning rates/momentums for attribute embedder and image embedder
-    \item\pause Normalize attributes to zero-mean and unit variance instead of just unit-norm
-    \item\pause Bernoulli/gaussian dropout
+    \item\pause For attribute $a_c$ let's set $\mu_c = W_{\mu} a_c$ and $\Sigma_c = \mathbb{W}_{\Sigma} a_c$
+    \item\pause But $\Sigma_c$ can be large, so $\mathbb{W}$ will be very expensive to use.
+    \item\pause Solution: let's use low-rank + diagonal approximation for $\Sigma_c$:
+    \[
+    \Sigma_c = A\times B + \Lambda,
+    \]
+    where $A,B$ are low-rank matrices and $\Lambda$ is diagonal (to fix the rank).
+    \item\pause A problem: in density computation for $\mathcal{N}(u | \mu_c, \Sigma_c)$ we need to compute $\det \Sigma_c$ and $\Sigma^{-1}_c$.
+    \item\pause Solution: let's output $\Sigma^{-1}_c$ directly as $LL^{T}$ (Cholesky decomposition) and use the identity $\det \Sigma_c = 1/\det (\Sigma_c^{-1})$.
 \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Changes summary}
+\pause
+Old logit computation:
+\[
+\log p(u|y_c) = \log u^\top v_c
+\]
 
 \pause
-What else to try?
+New logit computation:
+\[
+\log p(u|y_c) = -\frac{1}{2} \log \det(\Sigma_c) -\frac{1}{2}(\mathbf{x}-\boldsymbol{\mu}_c)^{\top} \Sigma_c^{-1}(\mathbf{x}-\boldsymbol{\mu}_c)
+\]
+
+\pause
+GMM differs from the baseline in 3 ways:
+    \begin{enumerate}
+        \item We use full-fletched covariance $\Sigma_c$: helps catching more entangled relationships
+        \item We take into account the shift $\mu_c$
+        \item We use determinant regularization for $\Sigma_c$
+    \end{enumerate}
+    
+Additional benefit: we now have a principled generative model.
+\end{frame}
+
+
+\begin{frame}{Experiments}
+
 \begin{itemize}
-    \item Initializations?
-    \item Residual connections?
+    \item\pause Datasets
+    \begin{itemize}
+        \item CUB (200 classes): 20 tasks, 10 classes each
+        \item AwA2 (50 classes): 10 tasks, 10 classes each
+        \item NABirds (in progress)
+    \end{itemize}
+    \item\pause Only a single epoch per task, i.e. we see each example only once per lifetime
+    \item\pause Hyperparameter search:
+    \begin{itemize}
+        \item Validation sequence: find the best hyperparams for a model on the first 3 tasks, then train the model on the rest with the best hyperparams.
+        \item Use the same hyperparameters grid for both models
+    \end{itemize}
+    \item\pause Metrics: accuracy on seen, accuracy on unseen, harmonic mean, AUSUC, forgetting, etc.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Question 2: is it sensible to have a linear generator?}
-    \begin{itemize}
-        \item\pause Imagine we have a linear generator $G(z, a_k) = W \cdot \binom{z}{a_k}$ for some weight matrix $W$, class attributes $a_1, ..., a_K$ and $z \sim \mathcal{N}(0,I)$
-        \item\pause This is equivalent to: $G(z, a_k) = W \cdot \binom{z}{a_k} = W_z z + W_a a_k$, where we split the weight matrix into 2 parts: $W = [W_z, W_a]$.
-        \item\pause Imagine we solve a classification task on top of the generator by using generated prototypes:
-        \begin{itemize}
-            \item\pause I.e. prototype $p_k$ for class $k$ is computed as $p_k = \expect[z]{G(z, a_k)}$
-            \item\pause But then we have
-            \[
-p_k = \expect[z]{G(z, a_k)} = \expect[z]{W_z z + W_a a_k} = 0 + W_a a_k = W_a a_k
-            \]
-            \item\pause This means that the generator works just by adding a bit of noise to our prototypes.
-        \end{itemize}
-        \item\pause Does it mean that using a linear generator is not sensible?
-        \item If so, can we fix that without introducing new layers (since it works worse)?
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Question 3: what is the simplest generative model?}
-    \begin{itemize}
-        \item\pause Our image embedder outputs feature vectors
-        \item\pause We want to fit this distribution, but based on class attributes, so to have
-        \begin{itemize}
-            \item We can't store mean/covariances of the past task since our feature extractor is changing over time
-        \end{itemize}
-    \end{itemize}
+\begin{frame}{The problem}
+The problem is that it does not quite work in practice...
+\begin{itemize}
+    \item Baseline model has normalize+scale trick which is \textit{crucial} to achieve good performance
+    \item However, for the GMM this trick is not applicable
+    \item How can we do normalize+scale for the GMM?
+\end{itemize}
 \end{frame}
 
 
