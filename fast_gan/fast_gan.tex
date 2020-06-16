@@ -1,0 +1,96 @@
+\documentclass[10pt, handout]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage{biblatex}
+% \input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+\begin{filecontents*}{references.bib}
+@misc{FixMatch,
+Author = {Kihyuk Sohn and David Berthelot and Chun-Liang Li and Zizhao Zhang and Nicholas Carlini and Ekin D. Cubuk and Alex Kurakin and Han Zhang and Colin Raffel},
+Title = {FixMatch: Simplifying Semi-Supervised Learning with Consistency and Confidence},
+Year = {2020},
+Eprint = {arXiv:2001.07685},
+}
+\end{filecontents*}
+
+\addbibresource{references.bib}
+
+
+\title{Speeding up GANs}
+%\subtitle{}
+\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+
+\begin{frame}{Motivation and the main idea}
+    \begin{itemize}
+        \item\pause Training GANs is very slow
+        \begin{itemize}
+            \item\pause i.e. it takes 9 days to train StyleGAN2 on FFHQ
+        \end{itemize}
+        \item\pause People start applying GANs in real-world applications, i.e. there is a growing demand for fast generative models
+        \item\pause Research on fast GANs is very limited\footnote{For now, I only found a paper on quantization, model distillation and core-set construction}
+        \item\pause This creates opportunities for several work directions:
+        \begin{itemize}
+            \item Bringing/creating methods to speed up GAN training and inference
+            \item Creating ``YOLO''-like GAN models: models with a good tradeoff between speed and quality
+            \item mlperf for GANs: GAN quality/speed open benchmarking
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Speeding up training}
+    \begin{itemize}
+        \item\pause Additional losses for faster convergence
+        \item\pause Pretraining: how much knowledge is transferrable between different GAN models?
+        \begin{itemize}
+            \item\pause Can we use ImageNet-pretrained conv layers?
+            \item\pause Can we train a single discriminator models on several datasets to be used in downstream tasks?
+            \item\pause Pretraining is a big thing in deep learning, but in GANs it is very limited
+        \end{itemize}
+        \item\pause Faster convergence with tricks like ReZero, superconvergence, etc.
+        \item\pause Faster inference
+        \item\pause What else?
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Speeding up inference}
+    \begin{itemize}
+        \item\pause Architectural tricks from classification:
+        \begin{itemize}
+            \item\pause groupwise/depthwise separable convolutions
+            \item\pause batch norm fusion
+            \item\pause what else?
+        \end{itemize}
+        \item\pause Quantization
+        \item\pause Distilling the model into a smaller one
+        \item\pause What else?
+    \end{itemize}
+\end{frame}
+
+\end{document}
