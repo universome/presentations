@@ -1,0 +1,51 @@
+@InProceedings{HashedNet,
+  title = 	 {Compressing Neural Networks with the Hashing Trick},
+  author = 	 {Wenlin Chen and James Wilson and Stephen Tyree and Kilian Weinberger and Yixin Chen},
+  booktitle = 	 {Proceedings of the 32nd International Conference on Machine Learning},
+  pages = 	 {2285--2294},
+  year = 	 {2015},
+  editor = 	 {Francis Bach and David Blei},
+  volume = 	 {37},
+  series = 	 {Proceedings of Machine Learning Research},
+  address = 	 {Lille, France},
+  month = 	 {07--09 Jul},
+  publisher = 	 {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v37/chenc15.pdf},
+  url = 	 {http://proceedings.mlr.press/v37/chenc15.html},
+  abstract = 	 {As deep nets are increasingly used in applications suited for mobile devices, a fundamental dilemma becomes apparent: the trend in deep learning is to grow models to absorb ever-increasing data set sizes; however mobile devices are designed with very little memory and cannot store such large models. We present a novel network architecture, HashedNets, that exploits inherent redundancy in neural networks to achieve drastic reductions in model sizes. HashedNets uses a low-cost hash function to randomly group connection weights into hash buckets, and all connections within the same hash bucket share a single parameter value. These parameters are tuned to adjust to the HashedNets weight sharing architecture with standard backprop during training. Our hashing procedure introduces no additional memory overhead, and we demonstrate on several benchmark data sets that HashedNets shrink the storage requirements of neural networks substantially while mostly preserving generalization performance.}
+}
+
+@inproceedings{Rethinking_Pruning,
+title={Rethinking the Value of Network Pruning},
+author={Zhuang Liu and Mingjie Sun and Tinghui Zhou and Gao Huang and Trevor Darrell},
+booktitle={International Conference on Learning Representations},
+year={2019},
+url={https://openreview.net/forum?id=rJlnB3C5Ym},
+}
+
+@article{State_of_sparsity,
+  title={The state of sparsity in deep neural networks},
+  author={Gale, Trevor and Elsen, Erich and Hooker, Sara},
+  journal={arXiv preprint arXiv:1902.09574},
+  year={2019}
+}
+
+@misc{SynFlow,
+    title={Pruning neural networks without any data by iteratively conserving synaptic flow},
+    author={Hidenori Tanaka and Daniel Kunin and Daniel L. K. Yamins and Surya Ganguli},
+    year={2020},
+    eprint={2006.05467},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG}
+}
+
+@incollection{Skeletonization,
+title = {Skeletonization: A Technique for Trimming the Fat from a Network via Relevance Assessment},
+author = {Mozer, Michael C and Paul Smolensky},
+booktitle = {Advances in Neural Information Processing Systems 1},
+editor = {D. S. Touretzky},
+pages = {107--115},
+year = {1989},
+publisher = {Morgan-Kaufmann},
+url = {http://papers.nips.cc/paper/119-skeletonization-a-technique-for-trimming-the-fat-from-a-network-via-relevance-assessment.pdf}
+}

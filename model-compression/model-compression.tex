@@ -1,0 +1,181 @@
+\documentclass[10pt, handout]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage{biblatex}
+% \input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+
+\addbibresource{references.bib}
+
+
+\title{Model Compression}
+%\subtitle{}
+\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Overview}
+    \tableofcontents
+\end{frame}
+
+\section{Motivation}
+\begin{frame}
+    \begin{itemize}
+        \item\pause Accelerating inference or training
+        \item\pause Reducing memory footprint
+        \item\pause Theoretical curiosity
+    \end{itemize}
+\end{frame}
+
+
+\section{Pruning}
+\begin{frame}{Pruning}
+    \begin{itemize}
+        \item\pause \textit{Pruning} is removing weights/neurons in a model while preserving the accuracy
+        \item\pause It can be done at different stages:
+        \begin{itemize}
+            \item\pause before training
+            \item\pause during training
+            \item\pause after training
+            \item\pause iteratively train/prune several times
+        \end{itemize}
+        \item\pause Pruning neurons speeds up a model, but:
+        \begin{itemize}
+            \item\pause \cite{Rethinking_Pruning} argues that training the pruned model from scratch would give the same performance
+            \item\pause So the main value is in optimizing the architecture
+        \end{itemize}
+        \item\pause Pruning weights (theoretically) reduces the number of FLOPs, but:
+        \begin{itemize}
+            \item\pause Resulted sparse matrices are not ``sparse enough'' to provide practical benefits (sparse matrix-vector multiplications are usually based on non-parallel computations)
+            \item\pause \cite{State_of_sparsity, Rethinking_Pruning} claim that modern SotA weight-pruning algorithms do  not generalize on large datasets
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+
+\subsection{Pruning weights}
+\begin{frame}{Pruning weights}
+    \pause Simple strategies:
+    \begin{itemize}
+        \item Apply $L_1$-regularization during training
+        \item Iterative Magnitude Pruning (IMP): prune weights
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Lottery Ticket Hypothesis (LTH)}
+    \begin{itemize}
+        \item 
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Synaptic Flow \cite{SynFlow} (part 1/k)}
+    \begin{itemize}
+        \item\pause Pruning algorithms remove weights based on score values associated with each weight
+        \item\pause These scores can usually be represented as
+    \begin{equation}\label{eq:syn-saliency}
+        \mathcal{S}(\theta)=\frac{\partial \mathcal{R}}{\partial \theta} \odot \theta
+    \end{equation}
+    for some function $R(\theta)$
+        \item\pause Authors call this function $S(\theta)$ a \textit{synaptic saliency} (importance) function
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\pause Many pruning algorithms have a form similar to \eqref{eq:syn-saliency}:
+    \begin{itemize}
+        \item\pause Magnitude Pruning:
+        \begin{equation}
+            \mathcal{R}(\theta) = \frac{1}{2}\| \theta \|_2^2 \Longrightarrow S(\theta_i) = \theta_i^2
+        \end{equation}
+        \item\pause Skeletonization \cite{Skeletonization}:
+        \begin{equation}
+            
+        \end{equation*}
+    \end{itemize}
+\end{frame}
+
+
+\subsection{Pruning neurons}
+\begin{frame}{Pruning neurons (\textit{structured pruning})}
+    \begin{itemize}
+        \item 
+        \item 
+    \end{itemize}
+\end{frame}
+
+
+
+\section{Hashing}
+\begin{frame}
+    pass
+\end{frame}
+
+\subsection{Simple hashing}
+\begin{frame}
+    pass
+\end{frame}
+
+\subsection{Multi-hashing}
+\begin{frame}
+    pass
+\end{frame}
+
+\section{Quantization}
+\begin{frame}
+    pass
+\end{frame}
+
+\section{Low-rank decomposition}
+\begin{frame}
+    pass
+\end{frame}
+
+\begin{frame}{}
+    
+\end{frame}
+
+\section{Other techniques}
+\begin{frame}{Knowledge distillation}
+    pass
+\end{frame}
+
+\begin{frame}{Conditional computation}
+    pass
+\end{frame}
+
+\begin{frame}{Architectural tricks}
+    pass
+\end{frame}
+
+\section{Conclusion}
+\begin{frame}
+    pass
+\end{frame}
+
+
+\end{document}

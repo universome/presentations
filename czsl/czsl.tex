@@ -1,4 +1,4 @@
-\documentclass[handout, 10pt]{beamer}
+\documentclass[10pt]{beamer}
 
 %\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
 \usepackage{bm}
@@ -311,6 +311,7 @@ Let's look closer at logits:
     where $A,B$ are low-rank matrices and $\Lambda$ is diagonal (to fix the rank).
     \item\pause A problem: in density computation for $\mathcal{N}(u | \mu_c, \Sigma_c)$ we need to compute $\det \Sigma_c$ and $\Sigma^{-1}_c$.
     \item\pause Solution: let's output $\Sigma^{-1}_c$ directly as $LL^{T}$ (Cholesky decomposition) and use the identity $\det \Sigma_c = 1/\det (\Sigma_c^{-1})$.
+    \item\pause In clock-wall time, GMM vs baseline works 15\% slower on CUB and 0\% slower on AwA\footnote{Values taken from tqdm measurements on a single preliminary experiment}.
 \end{itemize}
 \end{frame}
 
@@ -335,8 +336,37 @@ GMM differs from the baseline in 3 ways:
         \item We take into account the shift $\mu_c$
         \item We use determinant regularization for $\Sigma_c$
     \end{enumerate}
+
+\pause
+Additional benefit: we now have a principled generative model since our loss encourages discriminative training for $f(x)$ and generative training for $g(a)$ at the same time.
+\end{frame}
+
+\begin{frame}{Implementation details}
+\pause
+For each attribute $a_c$ predict 4 things:
+    \begin{itemize}
+        \item mean vector $\mu_c = W_\mu a_c$ of size $n$
+        \item covariance diagonal $\sigma_c = W_\sigma a_c$ of size $n$
+        \item covariance left matrix $A_c = \mathbb{W}_A a_c$ of size $n\times r$ (we set $r = 5$)
+        \item covariance left matrix $B_c = \mathbb{W}_B a_c$ of size $r\times n$ (we set $r = 5$)
+    \end{itemize}
+
+\pause
+Now we can compute inverse covariance:
+\[
+L_c^{-1} = \text{tril}(A_c \times B_c) + \text{Diag}(\sigma_c),
+\]
+where $\text{tril}(.)$ --- zeros out an upper triangle of a matrix and $\text{Diag}(.)$ --- constructs a diagonal matrix from a vector.
+
+\pause
+After that we compute 
+\[
+\Sigma^{-1} = (L_c^{-1})^\top L_c^{-1}
+\]
+
+\pause
+Using $\mu_c$ and $\Sigma^{-1}$ we can now compute $\mathcal{N}(u | \mu_c, \Sigma_c)$ in a fast way.
     
-Additional benefit: we now have a principled generative model.
 \end{frame}
 
 
