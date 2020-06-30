@@ -97,7 +97,7 @@
         \item\pause Pruning algorithms remove weights based on score values associated with each weight
         \item\pause These scores can usually be represented as
     \begin{equation}\label{eq:syn-saliency}
-        \mathcal{S}(\theta)=\frac{\partial \mathcal{R}}{\partial \theta} \odot \theta
+        S(\theta)=\frac{\partial \mathcal{R}}{\partial \theta} \odot \theta
     \end{equation}
     for some function $R(\theta)$
         \item\pause Authors call this function $S(\theta)$ a \textit{synaptic saliency} (importance) function
@@ -114,8 +114,9 @@
         \end{equation}
         \item\pause Skeletonization \cite{Skeletonization}:
         \begin{equation}
-            
+            \mathcal{R}(\theta) = -L(\theta) \Longrightarrow S(\theta)= -\frac{\partial \mathcal{L}}{\partial \theta} \odot \theta
         \end{equation*}
+        \item
     \end{itemize}
 \end{frame}
 
