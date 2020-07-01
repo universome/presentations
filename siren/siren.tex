@@ -1,0 +1,63 @@
+\documentclass[handout, 10pt]{beamer}
+
+%\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{makecell}
+\usepackage{filecontents}
+\usepackage{biblatex}
+\usepackage{xcolor}
+% \input{../new-commands.tex}
+
+%\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+\begin{filecontents*}{references.bib}
+@misc{SIREN,
+    title={Implicit Neural Representations with Periodic Activation Functions},
+    author={Vincent Sitzmann and Julien N. P. Martel and Alexander W. Bergman and David B. Lindell and Gordon Wetzstein},
+    year={2020},
+    eprint={2006.09661},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
+\end{filecontents*}
+
+\addbibresource{references.bib}
+
+
+\title{Implicit Neural Representations with Periodic Activation Functions\footnote{\citepaper{SIREN}}}
+%\subtitle{}
+%\author{Ivan Skorokhodov}
+%\date{}
+%\logo{\includegraphics[height=1cm]{images/ipavlov-logo.png}}
+
+\newcommand{\citepaper}[1]{\citetitle{#1} by \citeauthor{#1}, \citeyear{#1}}
+
+%\graphicspath{{./images}}
+
+%\usetheme{lucid}
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Overview}
+    \begin{itemize}
+        \item\pause We can represent images/3D-objects/video/audio/etc as \textit{implicit neural representations} (INR)
+        \item\pause INR is a neural network $\Phi(v)$ which takes a coordinates vector $v$ and produces a pixel/voxel/frequency/etc value at that point:
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.4\textwidth]{images/inr}
+        \end{figure}
+        \item\pause I.e. one neural network corresponds to a single image.
+        \item\pause Authors showed that it is very helpful to use periodic activation functions
+    \end{itemize}
+\end{frame}
+
+\end{document}
