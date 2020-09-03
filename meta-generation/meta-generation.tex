@@ -49,22 +49,19 @@
 \end{frame}
 
 
-%\begin{frame}{Benefits of INRs}
-%    \begin{itemize}
-%        \item\pause They carry more ``complete'' information about a signal:
-%        \begin{itemize}
-%            \item Usual 2D arrays of pixels are discretized version of a signal
-%            \item INRs are continuous and carry information ``between'' the pixels
-%            \item This allows one to have ``superresolution out-of-the-box''
-%        \end{itemize}
-%        \item\pause They are popular in 3D deep learning since they are cheaper to generate and operate with than 3D objects
-%        \begin{itemize}
-%            \item\pause For 2D images the situation is not currently clear
-%        \end{itemize}
-%    \end{itemize}
-%\end{frame}
-%
-%
+\begin{frame}{Benefits of INRs}
+    \begin{itemize}
+        \item\pause They carry more ``complete'' information about a signal:
+        \begin{itemize}
+            \item Usual 2D arrays of pixels are discretized version of a signal
+            \item INRs are continuous and carry information ``between'' the pixels
+            \item This allows one to have ``superresolution out-of-the-box''
+        \end{itemize}
+        \item\pause They are popular in 3D deep learning since they are cheaper to generate and operate with than 3D objects
+    \end{itemize}
+\end{frame}
+
+
 %\begin{frame}{Problems with INRs}
 %\begin{itemize}
 %    \item\pause INRs are not that small:
@@ -97,18 +94,16 @@
 
 
 \begin{frame}{INR-GAN}
-\begin{itemize}
-    \item\pause Main idea: train a generator to produce INRs
+Train a generator to produce INRs
     \begin{figure}
         \centering
         \includegraphics[width=0.9\textwidth]{images/inr-gan}
     \end{figure}
-    \item\pause Discriminator can operate:
-    \begin{itemize}
-        \item\pause on top of images
-        \item\pause on top of INRs (but this would require converting the whole dataset into INRs)
-    \end{itemize}
-\end{itemize}
+%    \item\pause Discriminator can operate:
+%    \begin{itemize}
+%        \item\pause on top of images
+%        \item\pause on top of INRs (but this would require converting the whole dataset into INRs)
+%    \end{itemize}
 \end{frame}
 
 
@@ -136,95 +131,188 @@
 \end{frame}
 
 
-\begin{frame}{Question: what other benefits can an INR-GAN have?}
-What other benefits can an INR-GAN have compared to a traditional GAN?
-\end{frame}
-
-
-\begin{frame}{Current samples on LSUN bedroom 64x64}
+\begin{frame}{Samples on LSUN bedroom 64x64 (FID: 12.75)}
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{images/samples}
 \end{figure}
 \end{frame}
 
+%\begin{frame}{Interpolations on LSUN bedroom 64x64}
+%\begin{figure}
+%    \centering
+%    \includegraphics[width=\textwidth]{images/interpolations}
+%\end{figure}
+%\end{frame}
+%
+%\begin{frame}{Activations histograms in the INR}
+%\begin{figure}
+%    \centering
+%    \includegraphics[width=\textwidth]{images/activations}
+%\end{figure}
+%\end{frame}
 
-\begin{frame}{Interpolations on LSUN conference room 64x64}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-conference-room}
-\end{figure}
-\end{frame}
-
-\begin{frame}{Interpolations on LSUN bedroom 64x64}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-1}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-2}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-3}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-4}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-5}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/interpolations-6}
-\end{figure}
-\end{frame}
-
-
-\begin{frame}{Question 1: how to show ``geomtry understanding''}
-    \begin{itemize}
-        \item\pause CoordConv GAN paper claims that there interpolations are ``geometry-aware'': they are done through rotations, zooms, translations, etc.
-        \item\pause In our experiments, we have found the same property
-        \item\pause We have not checked if it is true for StyleGAN (it is likely to be true)
-        \item\pause If it is true for StyleGAN, it does not mean that it was \textit{more difficult} for it to learn this geometry information (i.e. it could spend a lot of capacity on it).
-        \item\pause How can we demonstrate that our model captures the geometry more easily?
-    \end{itemize}
-\end{frame}
-
-
-\begin{frame}{Question 2: stability}
-\begin{figure}
-\centering
-\includegraphics[width=\textwidth]{images/activations-hists}
-\end{figure}
+\begin{frame}{Q: FourierINR vs SIREN}
+\pause
+SIREN:
 \begin{itemize}
-    \item\pause Do we have a stability problem? How to alleviate it?
-    \item\pause It's important to solve it since it's important to learn with a high LR 
+    \item\pause Use $\sin(x)$ activation function everywhere
+    \item\pause Initialize the weights with $\sigma = \sqrt{2/n_\text{in}}$
+    \item\pause For the first layer, use $\sigma_1 = \sigma / 30$ and multiply the activations by 30 afterwards. Why? Do we suffer from small gradients when we use $\sin(x)$?
+\end{itemize}
+
+\pause 
+Fourier INR:
+\begin{itemize}
+    \item\pause Use $\sin(x)$ and $\cos(x)$ for the first layer (and concat them together)
+    \item\pause Use traditional layers and activations on top of that
+    \item\pause Initialize the first layer with $\sigma \sim 100$.
+\end{itemize}
+
+Which one do you like more?
+\end{frame}
+
+
+%\begin{frame}{``GAN stability'' paper baseline}
+%\begin{itemize}
+%    \item\pause Use ``GAN-stability'' model as a baseline
+%    \item\pause 
+%\end{itemize}
+%\end{frame}
+
+
+\begin{frame}{Size/quality tradeoff for INR architecture}
+\begin{table}[]
+\begin{tabular}{|l|c|c|}
+\hline
+Type & MAE (50 imgs) & \#params \\ \hline
+Linear & 0.047 & $n^2 + n$ \\
+SELinear & 0.050 & $n^2 + n$ \\
+mFiLM & 0.914 & $3n$ \\
+mFiLM -norm & 0.656 & $3n$ \\
+mFiLM -norm +scale & 0.089 & $3n$ \\
+Factorized ($r=10$) & 0.285 & $2nr + n$ \\
+FactorizedSE ($r=10$) & 0.059 & $2nr + n$ \\
+AdaIN & 0.089 & $2n$ \\ \hline
+\end{tabular}
+\end{table}
+\textit{All of them ran in 3.6 iters/sec} on 1080 Ti and used ~10 GB GPU memory\footnote{Except for AdaIN, which took more memory for some reason.}.
+\end{frame}
+
+
+\begin{frame}{Changes overview}
+Implementing some tricks increased FID from $\approx$150 to 58 at 20k iterations on LSUN conference room\footnote{I didn't test each change individually}:
+\begin{itemize}
+    \item\pause SIREN $\to$ FourierINR
+    \item\pause Generator EMA (had to remove BatchNorm)
+    \item\pause WGAN-GP $\to$ R1
+    \item\pause D5:G1 $\to$ D1:G1 ticks
+    \item\pause batch size 32 $\to$ batch size 64 
+    \item\pause LRs 0.002/0.0002 $\to$ 0.0001/0.0002 for G/D (like in StyleGAN)\footnote{What LR should we use for G? Is it equivalent to the mapping network?}
+    \item\pause INR size $64 \times 5 \to 256 \times 5$
+    \item\pause INRLinear $\to$ INRFactorizedSELinear
+    \item\pause WGAN loss $\to$ NS loss (results are in progress)
+    \item\pause Residual weight $0.0 \to 0.1$
 \end{itemize}
 \end{frame}
 
 
-
-
-\begin{frame}{Question: abrupt interpolations problem}
-\pause
-Sometimes during interpolations we have a very abrupt change
-
-\pause
+\begin{frame}{Model samples for LSUN bedroom 128x128}
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{images/abrupt-changes-1}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/abrupt-changes-2}
-\end{figure}
+    \includegraphics[width=\textwidth]{images/best-model-samples-august-30}
+    \caption{Model samples for LSUN bedroom 128x128 after 500k iterations. FID is 7.2}
+\end{figure}    
+\end{frame}
+
+
+\begin{frame}{Bluntly increasing the model size}
+Bluntly increasing the model size does not work:
+\begin{itemize}
+    \item\pause For INR, increasing the size from $256 \times 5 \to 256 \times 10$ resulted in FID degradation: $12 \to 15$ FID after 40k iters
+    \item\pause For G, switching from $1024 \times 5$ to:
+    \begin{itemize}
+        \item\pause $2048 \times 3$ backbone
+        \item\pause 7 independent heads of $1024 \times 3$
+    \end{itemize}
+    resulted in FID degradation: $12 \to 35$ after 50k iters
+    \item\pause For D, increasing the size from 10M parameters to 30M parameters didn't change FID
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{INR natural upsampling vs bilinear upsampling}
+Consider the following setup:
+\begin{itemize}
+    \item\pause Train an INR-GAN on $128\times 128$ images
+    \item\pause Upsample to $256 \times 256$ with bilinear upsampling
+    \item\pause Upsample to $256 \times 256$ with INR ``natural'' upsampling (i.e. just use a denser coordinate grid as an INR input)
+\end{itemize}
 
 \pause
-What can be the cause of it and how to alleviate it?
+Result:
+\begin{itemize}
+    \item\pause FID for INR natural upsampling is $\sim 2$ times better than for the bilinear upsampling:
+    \begin{itemize}
+        \item\pause 22 vs 41.4 after 70k iterations on LSUN bedroom
+    \end{itemize}
+    \item\pause But it is $\sim 2$ times worse than model's FID score on $128\times 128$ images
+    \begin{itemize}
+        \item\pause 22 vs 10.7 after 70k iterations on LSUN bedroom
+    \end{itemize}
+\end{itemize}
+
+How to improve INR natural upsampling?
+\end{frame}
+
+
+\begin{frame}{Clipping G output}
+\pause
+\begin{itemize}
+    \item\pause Instead of $w = G(z)$ compute INR weights with:
+    $$w = \text{clip}(G(z), -2, 2)$$
+    \item\pause This is approximately $\pm 2\sigma$ for $\mathcal{N}(0,1)$. 
+\end{itemize}
+
+\pause This does not change FID much ($8 \to 7.6$ after 300k iters on LSUN bedroom), but makes interpolations awful:
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/normal_clip_lerp.png}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Deciding upon the contributions}
+What we are going to sell:
+\begin{itemize}
+    \item\pause Best known scores for a GAN with G consisting entirely from fully-connected layers
+    \item\pause We investigated different INR parametrizations and proposed novel FactorizedSE paramtrization
+    \item\pause We show that INR interpolates much better than bilinear/nearest/cubic interpolations
+    \item\pause We investigated scaling inside the INR
+    \item\pause We argue that INRs has good potential and will replace conv-based decoders someday (but leave these claims for future work):
+    \begin{itemize}
+        \item\pause an ability to train the model on extreme-scale images ($4096 \times 4096$)
+        \item\pause out-of-the-box interpolation
+        \item\pause universal G architecture for any domain (images, video, audio, etc)
+    \end{itemize}
+\end{itemize}
+
+Overall, we pushed INR-GANs for image domain quite far.
+Our work democratizes INR-GANs.
+\end{frame}
+
+
+\begin{frame}{Next steps}
+\begin{itemize}
+    \item\pause Local patch discriminator: additional D that operates on local upsampled patches
+    \begin{itemize}
+        \item\pause This would make training 2 times slower. Can we alleviate this?
+    \end{itemize}
+    \item\pause Training on variable-sized images
+    \begin{itemize}
+        \item\pause We hope that traditional convolutions would have problems producing different-ratio images
+    \end{itemize}
+\end{itemize}
 \end{frame}
 
 \end{document}
