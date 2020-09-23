@@ -1,4 +1,4 @@
-\documentclass[10pt, handout]{beamer}
+\documentclass[10pt]{beamer}
 
 %\usepackage[backend=bibtex,firstinits=true,style=verbose-inote,citestyle=authortitle]{biblatex}
 \usepackage{bm}
@@ -282,14 +282,122 @@ How to improve INR natural upsampling?
 \end{frame}
 
 
+\begin{frame}{Concatenating a local patch to an image}
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/patch-concatenation}
+\end{figure}
+
+Main idea:
+\begin{enumerate}
+    \item select a random image patch
+    \item upsample it
+    \item concatenate to the image
+    \item train in such a manner
+\end{enumerate}
+
+This should force G to learn how to upsample to high-res.
+\end{frame}
+
+\begin{frame}{Concatenating a local patch to an image didn't work}
+\pause
+
+But it didn't work (LSUN bedroom $128 \times 128$):
+\begin{itemize}
+    \item For patch of ratio of 0.25, FID is 33
+    \item For patch of ratio of 0.5, FID is 120
+    \item For patch of ratio of 0.75, FID is 10.5
+\end{itemize}
+
+\pause
+However, concatenating a 0.25 patch makes the gap between FID and upsampled FID lower:
+\begin{itemize}
+    \item FID gap is 5 while usually it is $>10$.
+\end{itemize}
+
+\pause
+\textit{Q: Why did the training diverge?}
+\end{frame}
+
+
+\begin{frame}{Is G too weak?}
+I tried to run 3 generator versions:
+\begin{itemize}
+    \item With 2 hidden layers
+    \item With 3 hidden layers
+    \item With 6 hidden layers (default option)
+\end{itemize}
+
+And they worked almost the same!
+FIDs are 7.9, 7.8 and 7.65 after 350k iters on LSUN bedroom $128 \times 128$.
+
+\textit{Q: How to check if G is too weak?}
+\end{frame}
+
+
+\begin{frame}{Linear generator}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{images/linear-generator}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Traditional INR parametrization}
+\pause
+Traditional INR parametrization requires $N_\varphi \times $ size matrix for G output layer.
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/linear-inr}
+\end{figure}
+
+\pause
+That's why a good chunk of research was devoted to finding cheap but expressive INR parametrization.
+\end{frame}
+
+
+\begin{frame}{Factorized squeeze-and-excitation INR parametrization}
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/factorized-se-linear}
+\end{figure}
+
+Idea:
+\begin{enumerate}
+    \item\pause For layer $\ell$, produce matrices $A_\ell, B_\ell$ of sizes $n\times r$ and $r \times n$ respectively.
+    \item\pause Multiply them together to get a low-rank $\tilde{W}_\ell = A_\ell B_\ell$ of rank $r$
+    \item\pause Compute $W_\ell = \hat{W}_\ell \odot \tilde{W}_\ell$ where $\hat{W}_\ell$ is a full-rank matrix shared for all images.
+    \item\pause In this way, G neuromodulates existing $\tilde{W}_\ell$ and we control cost/expressivity with rank $r$.
+    \item\pause In practice, $r=5$ works fine.
+\end{enumerate}
+\end{frame}
+
+
+\begin{frame}{Going further: Multi-Modal INRs}
+Idea:
+\begin{itemize}
+    \item\pause Let's keep not a single $\hat{W}_\ell$, but $M$ such matrices: $\hat{W}^{(1)}, \hat{W}^{(M)}$
+    \item\pause Each $\hat{W}_\ell^{(m)}$ corresponds to a different mode.
+    \item\pause G additionally produces a softmax distribution $p_1, ..., p_M$ and selects over different modes.
+    \item\pause A good thing is that it does not increase computation burden much.
+    \item\pause For reconstruction task, it worked like a charm: $0.059 \to 0.037$ for $M=100$.
+    \item\pause For generation task, it performed worse: $10.5 \to 11.2$ after 200k iters on FFHQ $128 \times 128$.
+\end{itemize}
+
+\textit{Q: why didn't it work better?}
+\end{frame}
+
+
+
 \begin{frame}{Deciding upon the contributions}
 What we are going to sell:
 \begin{itemize}
     \item\pause Best known scores for a GAN with G consisting entirely from fully-connected layers
+    \item\pause Can we say that our G has just 2 hidden layers?
     \item\pause We investigated different INR parametrizations and proposed novel FactorizedSE paramtrization
     \item\pause We show that INR interpolates much better than bilinear/nearest/cubic interpolations
     \item\pause We investigated scaling inside the INR
-    \item\pause We argue that INRs has good potential and will replace conv-based decoders someday (but leave these claims for future work):
+    \item\pause We should argue that INRs has good potential and will replace conv-based decoders someday (but leave these claims for future work):
     \begin{itemize}
         \item\pause an ability to train the model on extreme-scale images ($4096 \times 4096$)
         \item\pause out-of-the-box interpolation
@@ -299,15 +407,19 @@ What we are going to sell:
 
 Overall, we pushed INR-GANs for image domain quite far.
 Our work democratizes INR-GANs.
+
+\textit{Q: in what form should we present what we've done?}
+\end{frame}
+
+
+\begin{frame}{Next step: hierarchical INR}
+    I didn't think that we'll get that far. That's why this slide is empty.
 \end{frame}
 
 
 \begin{frame}{Next steps}
 \begin{itemize}
-    \item\pause Local patch discriminator: additional D that operates on local upsampled patches
-    \begin{itemize}
-        \item\pause This would make training 2 times slower. Can we alleviate this?
-    \end{itemize}
+    \item\pause Main bottleneck in INR is the hidden dimensionality which is very expensive to scale
     \item\pause Training on variable-sized images
     \begin{itemize}
         \item\pause We hope that traditional convolutions would have problems producing different-ratio images
